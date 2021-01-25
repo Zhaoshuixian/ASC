@@ -1,0 +1,29 @@
+
+
+----功能引脚----
+
+//PA0 - PA1 - PA2(U2TX) - PA32(U2RX) - PA4 
+ 
+//PA5(BMI160-VCC-SWITCH)
+
+//PA6(AD7193-VCC-SWITCH)
+
+//PB0(EXT-INT-TRIG)
+
+//PA8(LED)
+
+//PA9(U1TX) PA10(U1RX)
+
+//PA11(数字TEMP信号)  //若是ADC型需要作变更
+
+//PA12(TEMP-VCC-SWITCH)
+
+//PA15(SPI1-CS) PB3-PB5
+
+//PB6-PB7(I2C1)
+
+//PC15(KEY1)
+
+//PC14 PB1 PA13 PA14  --(NC)
+
+
