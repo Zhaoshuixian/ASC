@@ -27,41 +27,19 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+
 #include "stm32l4xx_hal.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+#define DEVICE_INIT_OK     (0)
+#define DEVICE_INIT_ERROR  (1)
 
-/* USER CODE END Includes */
-
-/* Exported types ------------------------------------------------------------*/
-/* USER CODE BEGIN ET */
-
-/* USER CODE END ET */
-
-/* Exported constants --------------------------------------------------------*/
-/* USER CODE BEGIN EC */
-
-/* USER CODE END EC */
-
-/* Exported macro ------------------------------------------------------------*/
-/* USER CODE BEGIN EM */
-
-/* USER CODE END EM */
-
-/* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
-/* USER CODE BEGIN EFP */
 
-/* USER CODE END EFP */
-
-/* Private defines -----------------------------------------------------------*/
 #define NC_2_Pin GPIO_PIN_14
 #define NC_2_GPIO_Port GPIOC
-#define KEI_SIN_Pin GPIO_PIN_15
-#define KEI_SIN_GPIO_Port GPIOC
+#define KEY_SIN_Pin GPIO_PIN_15
+#define KEY_SIN_GPIO_Port GPIOC
 #define KEI_SIN_EXTI_IRQn EXTI15_10_IRQn
 #define J1_1_Pin GPIO_PIN_0
 #define J1_1_GPIO_Port GPIOA
@@ -104,8 +82,14 @@ void Error_Handler(void);
 #define AD7193_MISO_GPIO_Port GPIOB
 #define AD7193_MOSI_Pin GPIO_PIN_5
 #define AD7193_MOSI_GPIO_Port GPIOB
+
+
+#define BMI160_PWR_SWITCH_GPIO_Port GPIOA
+#define BMI160_PWR_SWITCH_Pin  GPIO_PIN_5
+
 #define BMI160_SCL_Pin GPIO_PIN_6
 #define BMI160_SCL_GPIO_Port GPIOB
+
 #define BMI160_SDA_Pin GPIO_PIN_7
 #define BMI160_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */

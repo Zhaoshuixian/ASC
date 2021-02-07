@@ -6,7 +6,7 @@
 #include "comm.h"
 #include "stm32l4xx_ll_gpio.h"
 
-//-----IO¿Ú²Ù×÷-----
+//
 #define   MISO_STATE      HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_5)//PB5
 #define   PMOD1_CS_LOW    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_15,GPIO_PIN_RESET)//PA15--AFIO
 #define   PMOD1_CS_HIGH   HAL_GPIO_WritePin(GPIOA,GPIO_PIN_15,GPIO_PIN_SET)//PA15--AFIO
@@ -103,7 +103,7 @@
 #define AD7193_CH_5      5 // AIN3(+) - AIN4(-);       AIN6 - AINCOM
 #define AD7193_CH_6      6 // AIN5(+) - AIN6(-);       AIN7 - AINCOM
 #define AD7193_CH_7      7 // AIN7(+) - AIN8(-);       AIN8 - AINCOM
-#define AD7193_CH_TEMP   8 //           Temperature sensor
+#define AD7193_CH_TEMP   8 // Temperature sensor
 #define AD7193_CH_SHORT  9 // AIN2(+) - AIN2(-);       AINCOM(+) - AINCOM(-) 
 
 /* Configuration Register: AD7193_CONF_GAIN(x) options */

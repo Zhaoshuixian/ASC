@@ -1320,7 +1320,7 @@ static int8_t map_feature_interrupt(const struct bmi160_int_settg *int_config, c
  * @brief This API reads the data from the given register address
  * of sensor.
  */
-int8_t bmi160_get_regs(uint8_t reg_addr, uint8_t *data, uint16_t len, const struct bmi160_dev *dev)
+ int8_t bmi160_get_regs(uint8_t reg_addr, uint8_t *data, uint16_t len, const struct bmi160_dev *dev)
 {
     int8_t rslt = BMI160_OK;
 
@@ -1439,39 +1439,27 @@ int8_t bmi160_init(struct bmi160_dev *dev)
 
     /* Null-pointer check */
     rslt = null_ptr_check(dev);
-
     /* An extra dummy byte is read during SPI read */
-    if (dev->interface == BMI160_SPI_INTF)
-    {
-        dev->dummy_byte = 1;
-    }
-    else
-    {
-        dev->dummy_byte = 0;
-    }
-
+	   (dev->interface == BMI160_SPI_INTF)?(dev->dummy_byte = 1):(dev->dummy_byte = 0);
     /* Dummy read of 0x7F register to enable SPI Interface
      * if SPI is used */
-    if ((rslt == BMI160_OK) && (dev->interface == BMI160_SPI_INTF))
+    if ((rslt == BMI160_OK) && (dev->interface == BMI160_SPI_INTF))//SPI模式
     {
-        rslt = bmi160_get_regs(BMI160_SPI_COMM_TEST_ADDR, &data, 1, dev);
+        rslt = bmi160_get_regs(BMI160_SPI_COMM_TEST_ADDR, &data, 1, dev);//SPI接口测试
     }
-
     if (rslt == BMI160_OK)
     {
         /* Assign chip id as zero */
         dev->chip_id = 0;
-
-        while ((try--) && (dev->chip_id != BMI160_CHIP_ID))
+        while ((try--) && (dev->chip_id != BMI160_CHIP_ID))//3次探测
         {
             /* Read chip_id */
-            rslt = bmi160_get_regs(BMI160_CHIP_ID_ADDR, &dev->chip_id, 1, dev);
+            rslt = bmi160_get_regs(BMI160_CHIP_ID_ADDR, &dev->chip_id, 1, dev);//读取器件ID
         }
         if ((rslt == BMI160_OK) && (dev->chip_id == BMI160_CHIP_ID))
         {
             dev->any_sig_sel = BMI160_BOTH_ANY_SIG_MOTION_DISABLED;
-            /* Soft reset */
-            rslt = bmi160_soft_reset(dev);
+            rslt = bmi160_soft_reset(dev);/* Soft reset */
         }
         else
         {

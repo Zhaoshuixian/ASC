@@ -404,9 +404,9 @@
               <FilePath>.\DRIVER\comm.c</FilePath>
             </File>
             <File>
-              <FileName>msic.c</FileName>
+              <FileName>misc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\DRIVER\msic.c</FilePath>
+              <FilePath>.\DRIVER\misc.c</FilePath>
             </File>
           </Files>
         </Group>

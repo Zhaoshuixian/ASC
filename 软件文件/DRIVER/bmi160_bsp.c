@@ -5,37 +5,73 @@
 
 extern I2C_HandleTypeDef hi2c1;
 
+//传感器读操作
 signed char bmi160_rd(unsigned char dev_addr, unsigned char reg_addr, unsigned char *data, unsigned short int len)
 {
-	HAL_I2C_Master_Transmit(&hi2c1, dev_addr, &reg_addr, 1,0xFFFF);//写目标寄存器
-	HAL_I2C_Master_Transmit(&hi2c1, dev_addr, data, len,0xFFFF);   //写目标数据至寄存器
+	//数据帧结构操作(阻塞函数)
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,5000);//1.发起读操作
+	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,5000);    //2.接收目标数据
 	
 	return 0;	
 }
+
+//传感器写操作
 signed char bmi160_wr(unsigned char dev_addr, unsigned char reg_addr, unsigned char *data, unsigned short int len)
 {
-	HAL_I2C_Master_Receive(&hi2c1, dev_addr, &reg_addr, 1,0xFFFF);//写目标寄存器	
-	HAL_I2C_Master_Receive(&hi2c1, dev_addr, data, len,0xFFFF);   //写目标数据至寄存器
+	#define MAX_TX_SIZE (64) //设置最大传输字节数
+	
+	unsigned char tx_msg[MAX_TX_SIZE]={0};
+	
+	if(MAX_TX_SIZE<len)//传输数据长度超过缓存长度
+	{
+		return -1;
+	}
+	
+	tx_msg[0]=reg_addr;
+	memcpy(&tx_msg[1],data,len);//合并数据至MSG一并传输
+	
+	//数据帧结构操作(阻塞函数)
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,tx_msg,len+1,1000);   //写目标数据至寄存器
 	
 	return 0;
 }
 
+/*
+调试注意事项
+
+1. 默认开机后bmi160进入suspend mode，此时bmi160的加速度及陀螺仪功能均处于未工作状态。
+   需配置R0x7e寄存器使得加速度及陀螺仪功能进入正常工作（数据采样）模式。
+2. 每次进行加速度数据检测前，请先执行i2c_write_byte(0x7e,0x11)，使得加速度模块进入normal工作模式；
+3. 每次进行陀螺仪数据检测前，请先执行i2c_write_byte(0x7e,0x15) 使得陀螺仪模块进入normal工作模式；
+
+3.控制寄存器
+
+地址：0x7e。寄存器名：CMD。默认值：0x00。该寄存器可以读也可以写。
+
+我们通过向该地址写入不同的值来控制加速度或者陀螺仪的工作模式。
+
+0x11：通过写入该命令值，可以使加速度模块切换到正常工作模式。
+0x15：通过写入该命令值，可以使陀螺仪模块切换到正常工作模式。
+
+*/
+
+//传感器初始化
 unsigned char bmi160_bsp_init(struct bmi160_dev *me)
 {
-		me->id        = BMI160_I2C_ADDR;
-		me->interface = BMI160_I2C_INTF;
-		me->read      = bmi160_rd;
-		me->write     = bmi160_wr;
-		me->delay_ms  = HAL_Delay;//MS
+	  me->id        = BMI160_I2C_ADDR;//配置设备地址 :BMI160传感器的I2C设备地址是0x68(当SDO脚接地)/0x69(当SDO脚拉高)。
+		me->interface = BMI160_I2C_INTF;//配置I2C模式
+		me->read      = bmi160_rd;      //I2C读写操作函数
+		me->write     = bmi160_wr;      //I2C读写操作函数
+	  me->delay_ms  = HAL_Delay;      //MS级别延时函数
 
 		int8_t rslt = BMI160_OK;
-
-		rslt = bmi160_init(me);
+    
+		rslt = bmi160_init(me);        //初始化配置
 	
 	  return rslt;
 }
 
-
+//配置加速度传感器和陀螺仪传感器
 unsigned char bmi160_config_accel_gyro_sensors_in_normal_mode(struct bmi160_dev *me)
 {
 		int8_t rslt = BMI160_OK;
@@ -58,6 +94,7 @@ unsigned char bmi160_config_accel_gyro_sensors_in_normal_mode(struct bmi160_dev 
 	  return rslt;	
 }
 
+//读取传感器数据
 void bmi160_read_sensor_data(struct bmi160_dev *me)
 {
 		int8_t rslt = BMI160_OK;
@@ -79,6 +116,7 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL | BMI160_TIME_SEL), &accel, &gyro, me);	
 }
 
+//设置传感器电源模式
 unsigned char bmi160_set_the_power_mode_of_sensors(struct bmi160_dev *me)
 {
 		int8_t rslt = BMI160_OK;
@@ -100,6 +138,7 @@ unsigned char bmi160_set_the_power_mode_of_sensors(struct bmi160_dev *me)
 	  return rslt;	
 }
 
+//读传感器寄存器数据
 unsigned char bmi160_read_sensor_data_register(struct bmi160_dev *me)
 {
 		int8_t rslt      = BMI160_OK;
@@ -112,6 +151,7 @@ unsigned char bmi160_read_sensor_data_register(struct bmi160_dev *me)
 	  return rslt;		
 }
 
+//写传感器寄存器数据
 unsigned char bmi160_write_to_sensor_data_register(struct bmi160_dev *me)
 {
 		int8_t rslt      = BMI160_OK;
@@ -124,6 +164,7 @@ unsigned char bmi160_write_to_sensor_data_register(struct bmi160_dev *me)
 	  return rslt;		
 }
 
+//软件复位传感器设备
 unsigned char bmi160_reset_the_device_use_soft_reset(struct bmi160_dev *me)
 {
 		int8_t rslt = BMI160_OK;
@@ -133,7 +174,7 @@ unsigned char bmi160_reset_the_device_use_soft_reset(struct bmi160_dev *me)
 	  return rslt;		
 }
 
-
+//配置传感器任意运动中断
 void bmi160_config_any_motion_interrupt(struct bmi160_dev *me)
 {
 		struct bmi160_int_settg int_config;
@@ -163,7 +204,7 @@ void bmi160_config_any_motion_interrupt(struct bmi160_dev *me)
 		bmi160_set_int_config(&int_config, me); /* sensor is an instance of the structure bmi160_dev  */	
 }
 
-
+//配置传感器平面中断
 void bmi160_config_flat_interrupt(struct bmi160_dev *me)
 {
 		struct bmi160_int_settg int_config;
@@ -191,7 +232,7 @@ void bmi160_config_flat_interrupt(struct bmi160_dev *me)
 		bmi160_set_int_config(&int_config, me); /* sensor is an instance of the structure bmi160_dev */	
 }
 
-
+//配置传感器步进检测器中断
 void bmi160_config_step_detector_interrupt(struct bmi160_dev *me)
 {
 		struct bmi160_int_settg int_config;
@@ -202,12 +243,12 @@ void bmi160_config_step_detector_interrupt(struct bmi160_dev *me)
 		/* Select the Interrupt type */
 		int_config.int_type = BMI160_STEP_DETECT_INT;// Choosing Step Detector interrupt
 		/* Select the interrupt channel/pin settings */
-		int_config.int_pin_settg.output_en = BMI160_ENABLE;// Enabling interrupt pins to act as output pin
+		int_config.int_pin_settg.output_en   = BMI160_ENABLE;// Enabling interrupt pins to act as output pin
 		int_config.int_pin_settg.output_mode = BMI160_DISABLE;// Choosing push-pull mode for interrupt pin
 		int_config.int_pin_settg.output_type = BMI160_ENABLE;// Choosing active High output
-		int_config.int_pin_settg.edge_ctrl = BMI160_ENABLE;// Choosing edge triggered output
-		int_config.int_pin_settg.input_en = BMI160_DISABLE;// Disabling interrupt pin to act as input
-		int_config.int_pin_settg.latch_dur =BMI160_LATCH_DUR_NONE;// non-latched output
+		int_config.int_pin_settg.edge_ctrl   = BMI160_ENABLE;// Choosing edge triggered output
+		int_config.int_pin_settg.input_en    = BMI160_DISABLE;// Disabling interrupt pin to act as input
+		int_config.int_pin_settg.latch_dur   = BMI160_LATCH_DUR_NONE;// non-latched output
 
 		/* Select the Step Detector interrupt parameters, Kindly use the recommended settings for step detector */
 		int_config.int_type_cfg.acc_step_detect_int.step_detector_mode = BMI160_STEP_DETECT_NORMAL;
@@ -217,7 +258,13 @@ void bmi160_config_step_detector_interrupt(struct bmi160_dev *me)
 		bmi160_set_int_config(&int_config, me); /* sensor is an instance of the structure bmi160_dev */	
 }
 
-
+/*
+要配置步进计数器，用户需要按照上节所述配置步进检测器中断。
+配置步进检测器后，请参见以下有关用户空间和ISR的代码片段要配置步进计数器，
+用户需要按照上节所述配置步进检测器中断。配置步进检测器后，
+请参见以下有关用户空间和ISR的代码片段。
+*/
+//
 unsigned char bmi160_user_space(struct bmi160_dev *me)
 {
 		int8_t rslt = BMI160_OK;

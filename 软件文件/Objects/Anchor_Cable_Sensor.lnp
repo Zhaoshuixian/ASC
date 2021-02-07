@@ -3,7 +3,7 @@
 ".\objects\bmi160_bsp.o"
 ".\objects\ad7193.o"
 ".\objects\comm.o"
-".\objects\msic.o"
+".\objects\misc.o"
 ".\objects\main.o"
 ".\objects\stm32l4xx_hal_msp.o"
 ".\objects\stm32l4xx_it.o"

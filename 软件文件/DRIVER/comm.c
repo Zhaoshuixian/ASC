@@ -1,6 +1,9 @@
 
 #include "comm.h"
+#include "ad7193.h"	
+
 extern SPI_HandleTypeDef hspi3;
+
 /***************************************************************************//**
  * @brief Initializes the I2C communication peripheral.
  *
@@ -34,7 +37,6 @@ unsigned char I2C_Write(unsigned char slaveAddress,
                         unsigned char stopBit)
 {
     // Add your code here.
-
     return 1;    
 }
 
@@ -70,7 +72,7 @@ unsigned char I2C_Read(unsigned char slaveAddress,
  * @param clockPol - SPI clock polarity (0 or 1).
  *                   Example: 0x0 - Idle state for clock is a low level; active
  *                                  state is a high level;
- *	                      0x1 - Idle state for clock is a high level; active
+ *	                          0x1 - Idle state for clock is a high level; active
  *                                  state is a low level.
  * @param clockEdg - SPI clock edge (0 or 1).
  *                   Example: 0x0 - Serial output data changes on transition
@@ -82,10 +84,7 @@ unsigned char I2C_Read(unsigned char slaveAddress,
  *                  Example: 1 - if initialization was successful;
  *                           0 - if initialization was unsuccessful.
 *******************************************************************************/
-unsigned char SPI_Init(unsigned char lsbFirst,
-                       unsigned long clockFreq,
-                       unsigned char clockPol,
-                       unsigned char clockEdg)
+unsigned char SPI_Init(unsigned char lsbFirst,unsigned long clockFreq,unsigned char clockPol, unsigned char clockEdg)
 {
 	// Add your code here.
 	
@@ -102,12 +101,14 @@ unsigned char SPI_Init(unsigned char lsbFirst,
  *
  * @return Number of read bytes.
 *******************************************************************************/
-unsigned char SPI_Read(unsigned char slaveDeviceId,   
-                       unsigned char* data,
-                       unsigned char bytesNumber)
+unsigned char SPI_Read(unsigned char slaveDeviceId,unsigned char* data,unsigned char bytesNumber)
 {
-  // Add your code here.
-  HAL_SPI_Receive(&hspi3,data,bytesNumber,0xFFFFF);
+  if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_LOW;//使能SPI
+	
+  HAL_SPI_Receive(&hspi3,data,bytesNumber,5000);
+	
+	if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_HIGH;
+	
 	return bytesNumber;	
 }
 
@@ -120,11 +121,13 @@ unsigned char SPI_Read(unsigned char slaveDeviceId,
  *
  * @return Number of written bytes.
 *******************************************************************************/
-unsigned char SPI_Write(unsigned char slaveDeviceId,
-                        unsigned char* data,
-                        unsigned char bytesNumber)
+unsigned char SPI_Write(unsigned char slaveDeviceId,unsigned char* data,unsigned char bytesNumber)
 {
-   // Add your code here.
-  HAL_SPI_Transmit(&hspi3,data,bytesNumber,0xFFFFF);
+  if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_LOW; //使能SPI
+	
+  HAL_SPI_Transmit(&hspi3,data,bytesNumber,5000);
+	
+	if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_HIGH;
+	
 	return bytesNumber;
 }

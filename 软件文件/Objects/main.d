@@ -35,3 +35,14 @@
 .\objects\main.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_spi_ex.h
 .\objects\main.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_uart.h
 .\objects\main.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_uart_ex.h
+.\objects\main.o: .\DRIVER\misc.h
+.\objects\main.o: .\DRIVER\ad7193.h
+.\objects\main.o: .\DRIVER\comm.h
+.\objects\main.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_ll_gpio.h
+.\objects\main.o: .\DRIVER\bmi160_bsp.h
+.\objects\main.o: .\DRIVER\bmi160.h
+.\objects\main.o: .\DRIVER\bmi160_defs.h
+.\objects\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
+.\objects\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\objects\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
