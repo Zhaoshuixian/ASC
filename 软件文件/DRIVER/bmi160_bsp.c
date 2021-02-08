@@ -8,9 +8,11 @@ extern I2C_HandleTypeDef hi2c1;
 //传感器读操作
 signed char bmi160_rd(unsigned char dev_addr, unsigned char reg_addr, unsigned char *data, unsigned short int len)
 {
+
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,5000);//1.发起读操作
-	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,5000);    //2.接收目标数据
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,2000);//1.发起读操作 ,写目标寄存器命令
+	//HAL_Delay(1);
+	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,2000);    //2.接收目标寄存器值数据
 	
 	return 0;	
 }
@@ -20,19 +22,17 @@ signed char bmi160_wr(unsigned char dev_addr, unsigned char reg_addr, unsigned c
 {
 	#define MAX_TX_SIZE (64) //设置最大传输字节数
 	
-	unsigned char tx_msg[MAX_TX_SIZE]={0};
+	unsigned char tx_msg[MAX_TX_SIZE]={reg_addr};
 	
 	if(MAX_TX_SIZE<len)//传输数据长度超过缓存长度
 	{
 		return -1;
 	}
-	
 	tx_msg[0]=reg_addr;
-	memcpy(&tx_msg[1],data,len);//合并数据至MSG一并传输
-	
+	memcpy(&tx_msg[1],data,len);//合并数据至MSG缓存区,按照一帧格式传输
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,tx_msg,len+1,1000);   //写目标数据至寄存器
-	
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&tx_msg[0],len+1,2000);   //寄存器地址和数据连续写入
+   // HAL_Delay(1);
 	return 0;
 }
 
@@ -58,17 +58,19 @@ signed char bmi160_wr(unsigned char dev_addr, unsigned char reg_addr, unsigned c
 //传感器初始化
 unsigned char bmi160_bsp_init(struct bmi160_dev *me)
 {
-	  me->id        = BMI160_I2C_ADDR;//配置设备地址 :BMI160传感器的I2C设备地址是0x68(当SDO脚接地)/0x69(当SDO脚拉高)。
-		me->interface = BMI160_I2C_INTF;//配置I2C模式
-		me->read      = bmi160_rd;      //I2C读写操作函数
-		me->write     = bmi160_wr;      //I2C读写操作函数
-	  me->delay_ms  = HAL_Delay;      //MS级别延时函数
+	me->id        = BMI160_I2C_ADDR;//配置设备地址 :BMI160传感器的I2C设备地址是0x68(当SDO脚接地)/0x69(当SDO脚拉高)。
+	me->interface = BMI160_I2C_INTF;//配置I2C模式
+	me->read      = bmi160_rd;      //I2C读写操作函数
+	me->write     = bmi160_wr;      //I2C读写操作函数
+	me->delay_ms  = HAL_Delay;      //MS级别延时函数
 
-		int8_t rslt = BMI160_OK;
-    
-		rslt = bmi160_init(me);        //初始化配置
+	int8_t rslt = BMI160_OK;
 	
-	  return rslt;
+  //bmi160_soft_reset(me);
+	
+	rslt = bmi160_init(me);        //初始化配置
+
+	return rslt;
 }
 
 //配置加速度传感器和陀螺仪传感器

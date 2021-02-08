@@ -27,7 +27,16 @@ Project File Date:  02/07/2021
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'ACS'
-".\Objects\Anchor_Cable_Sensor.axf" - 0 Error(s), 0 Warning(s).
+compiling main.c...
+USER\Src\main.c(503): warning:  #177-D: function "MX_IWDG_Init"  was declared but never referenced
+  static void MX_IWDG_Init(void)
+USER\Src\main.c(515): warning:  #177-D: function "IWDG_Feed"  was declared but never referenced
+  static void IWDG_Feed(void)
+USER\Src\main.c: 2 warnings, 0 errors
+linking...
+Program Size: Code=14680 RO-data=500 RW-data=92 ZI-data=1660  
+FromELF: creating hex file...
+".\Objects\Anchor_Cable_Sensor.axf" - 0 Error(s), 2 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -82,8 +91,8 @@ Package Vendor: Keil
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_cortex.c
 
    * Component: Keil::Device:STM32Cube HAL:DMA:1.12.0
-      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_dma_ex.c
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_dma.c
+      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_dma_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:EXTI:1.12.0
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_exti.c
@@ -92,8 +101,8 @@ Package Vendor: Keil
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_gpio.c
 
    * Component: Keil::Device:STM32Cube HAL:I2C:1.12.0
-      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c_ex.c
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c.c
+      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:IWDG:1.12.0
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_iwdg.c
@@ -103,16 +112,16 @@ Package Vendor: Keil
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_pwr.c
 
    * Component: Keil::Device:STM32Cube HAL:RCC:1.12.0
-      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rcc.c
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rcc_ex.c
+      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rcc.c
 
    * Component: Keil::Device:STM32Cube HAL:RTC:1.12.0
-      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rtc_ex.c
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rtc.c
+      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rtc_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:SPI:1.12.0
-      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_spi.c
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_spi_ex.c
+      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_spi.c
 
    * Component: Keil::Device:STM32Cube HAL:TIM:1.12.0
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_tim_ex.c
@@ -123,8 +132,8 @@ Package Vendor: Keil
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_uart_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:USART:1.12.0
-      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_usart.c
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_usart_ex.c
+      Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_usart.c
 
    * Component: Keil::Device:STM32Cube HAL:WWDG:1.12.0
       Source file:   Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_wwdg.c
@@ -134,7 +143,7 @@ Package Vendor: Keil
       Source file:   Drivers\CMSIS\Device\ST\STM32L4xx\Source\Templates\arm\startup_stm32l432xx.s
       Include file:  Drivers\CMSIS\Device\ST\STM32L4xx\Include\stm32l4xx.h
       Source file:   Drivers\CMSIS\Device\ST\STM32L4xx\Source\Templates\system_stm32l4xx.c
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:03
 </pre>
 </body>
 </html>

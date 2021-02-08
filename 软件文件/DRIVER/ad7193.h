@@ -7,7 +7,7 @@
 #include "stm32l4xx_ll_gpio.h"
 
 //
-#define   MISO_STATE      HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_5)//PB5
+#define   MISO_STATE      HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4)//PB4
 #define   PMOD1_CS_LOW    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_15,GPIO_PIN_RESET)//PA15--AFIO
 #define   PMOD1_CS_HIGH   HAL_GPIO_WritePin(GPIOA,GPIO_PIN_15,GPIO_PIN_SET)//PA15--AFIO
 

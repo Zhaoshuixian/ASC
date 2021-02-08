@@ -46,8 +46,31 @@ static void IWDG_Feed(void);
 #define TEMPER_TASK_TIME  (10)
 #define KEY_TASK_TIME     (20)
 
-unsigned long t=0;
-float v=0.0;
+unsigned long chip_temperature=0;
+unsigned long ch1_raw_avg_data=0,ch2_raw_avg_data=0,ch3_raw_avg_data=0,ch4_raw_avg_data=0;
+float ch1_volt=0.0,ch2_volt=0.0,ch3_volt=0.0,ch4_volt=0.0;
+
+/*
+进低功耗前的配置：
+1. 如果有独立看门狗，需要在上电初始化时，通过修改FLASH寄存器的相关位，使看门狗在进入stop模式后停止计数，就不会引起看门狗复位了
+2.对应的外设SPI，调用对应外设的对应DeInit函数，要注意的是17版的库，SPI的DeInit函数有BUG，需要按照我另一篇文章（STM32L4退出低功耗后SPI读写出错）进行修改，不然低功耗唤醒后，SPI读写会异常
+调用函数： HAL_SPI_MspDeInit(&hspi2);
+3.外设ADC，需要关闭，不然会增加功耗，
+4.usart关闭
+调用函数：HAL_UART_DeInit(&huart3); __HAL_RCC_USART3_CLK_DISABLE();
+5.定时器，可以关闭也可以不关闭，不受影响
+调用函数： HAL_TIM_Base_Stop_IT(&htim2);
+6.GPIO配置，所有管脚设置为模拟输入模式，降低功耗
+7.设置唤醒管脚和RTC唤醒时钟
+8.调用进入低功耗的函数，进低功耗
+
+出低功耗后的配置：
+1.恢复时钟配置（若是用的MSI时钟可以不进行配置）
+2.GPIO初始化
+3.配置外设SPI，USART，ADC，定时器
+4.关闭RTC周期唤醒（防止在程序正常运行时，进入RTC周期唤醒中断）
+stop模式下停止看门狗计数
+*/
 
 
 //串口打印重映射
@@ -85,7 +108,9 @@ void device_led_toggle(void)
      case 2://常灭
           HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
            break;
-     case 3:
+     case 3://眨闪
+			    HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_RESET);
+		      HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
            break;         
   }
 
@@ -94,16 +119,24 @@ void device_led_toggle(void)
 void device_ad7193_read(void)
 {
   ad7193_range_setup(1, AD7193_CONF_GAIN_1);/* Select unipolar operation and ADC's input range to +-2.5V. */		
-  
-  ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-) */
-  ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
-  ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */
-  ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
-  
-  /* Returns the average of several conversion results. */
-  /* Converts 24-bit raw data to volts. */
-  v = ad7193_convert_to_volts(ad7193_continuous_readavg(10),5.0);
-  t = ad7193_temperature_read();	/* Read the temperature. */	
+
+//  ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-) */
+//	ch1_raw_avg_data = ad7193_continuous_readavg(10);
+//  ch1_volt = ad7193_convert_to_volts(ch1_raw_avg_data,5.0);	
+//	
+//  ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
+//	ch2_raw_avg_data = ad7193_continuous_readavg(10);	
+//  ch2_volt = ad7193_convert_to_volts(ch2_raw_avg_data,5.0);	
+//	
+//  ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */
+//	ch3_raw_avg_data = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
+//  ch3_volt = ad7193_convert_to_volts(ch3_raw_avg_data,5.0);/*Converts 24-bit raw data to volts. */	
+//	
+//  ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
+//	ch4_raw_avg_data = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
+//  ch4_volt = ad7193_convert_to_volts(ch4_raw_avg_data,5.0);	 /*Converts 24-bit raw data to volts. */	
+	
+  chip_temperature = ad7193_temperature_read();	/* Read the temperature. */	
 }
 
 void device_bmi160_read(void)
@@ -116,15 +149,7 @@ void device_key_read(void)
   static uint8_t last_key,now_key,key_count;
   
   //按键状态读取
-  if(0==HAL_GPIO_ReadPin(KEY_SIN_GPIO_Port,KEY_SIN_Pin))//按下
-  {
-    now_key=1;
-  }
-  else //释放
-  {
-    now_key=0;
-    last_key = now_key;
-  }
+  (0==HAL_GPIO_ReadPin(KEY_SIN_GPIO_Port,KEY_SIN_Pin))?(now_key=1):(now_key=0);
 
   //按键动作变化处理
   if(last_key!=now_key)
@@ -132,24 +157,10 @@ void device_key_read(void)
 		printf("The Key has Trigged...\r\n");		
     if(0!=now_key)//按下
     {
-      (2<key_count)?(key_count=1):(key_count++);
-
-      if(0!=key_count%2)
-      {
-        if(0==LED_Status_Flag)//处于闪烁状态
-        {
-          LED_Status_Flag=1;//切换为常亮状态
-        }
-      }
-      else
-      {
-        if(0!=LED_Status_Flag)//处于非亮状态
-        {
-          LED_Status_Flag=0;//切换为闪烁状态
-        }        
-      }
+			(0==++key_count%2)?(LED_Status_Flag=0):(LED_Status_Flag=1);
     }   
   }
+	last_key = now_key;
 }
 
 void device_temper_read(void)
@@ -165,23 +176,22 @@ int main(void)
 {
   HAL_Init();
   SystemClock_Config();
-
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_I2C1_Init();//for BMI160
+  MX_I2C1_Init();  //for BMI160
   MX_SPI3_Init();  //for AD7193
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();	
 
-	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
-	{
-		  printf("BMI160 Init failed...\r\n");
-			while(1)
-			{
-				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-				HAL_Delay(150);//LED闪烁指示
-			}
-	}	
+//	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
+//	{
+//		  printf("BMI160 Init failed...\r\n");
+//			while(1)
+//			{
+//				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+//				HAL_Delay(150);//LED闪烁指示
+//			}
+//	}	
 	/*
 		AD7193具体步骤：
 		1.Init
@@ -204,22 +214,27 @@ int main(void)
 			HAL_Delay(100);//LED闪烁指示
 		}
 	}
+	//通道零点和量程进行预校准
   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
+	HAL_Delay(1);
   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
-
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
-
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
-
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
-
+	HAL_Delay(1);
+//  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+	HAL_Delay(1);	
+//  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+	HAL_Delay(1);
+//  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+	HAL_Delay(1);	
+//  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
+	HAL_Delay(1);
+//  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+	HAL_Delay(1);	
+//  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
   //MX_IWDG_Init();
-  printf("\r\n-------Guangdong Tek Smart Sensor Ltd,.Company-------\r\n");
-  printf("\r\n--------------Make Data: %s-%s-----------------------\r\n",(const char *)__TIME__,(const char *)__DATE__);
+  printf("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
+  printf("\r\n--------------Make Data: %s-%s------------------\r\n",(const char *)__TIME__,(const char *)__DATE__);
   printf("\r\n------------------All Init OK------------------------\r\n");
+	
   while (1)
   {
     if(1!= SleepMode_Enter_Flag)//1. -> NORMAL MODE
@@ -232,14 +247,15 @@ int main(void)
       task_sheduler(device_ad7193_read,AD7193_TASK_TIME, 3);    
       //1.4 -- KEY_BUTTON --	
       task_sheduler(device_key_read,   KEY_TASK_TIME,    4);    
-      //1.5 -- TEMPER_SENSOR --
+      //1.5 -- EXT TEMPER_SENSOR --
       //task_sheduler(device_temper_read,TEMPER_TASK_TIME, 5);    
       //1.6 -- EXT_TRIG_SINGAL --
+			
     }
     else//2. -> SLEEP MODE 
     {
-      // System_Enter_StopMode();
-      // SystemClock_ReConfig_When_Exit_StopMode();
+      // System_Config_When_Enter_StopMode();
+      // System_ReConfig_When_Exit_StopMode();
       while(1);
     }
   }
@@ -255,13 +271,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
   else if(KEY_SIN_Pin == GPIO_Pin)//按键引脚
   {
-
+   //
   }
 }
 /*
 系统进入休眠状态(停止模式)
 */
-void System_Enter_StopMode(void)
+void System_Config_When_Enter_StopMode(void)
 { 
   //为了将功耗降到最低，将引脚恢复初始化状态
   GPIO_InitTypeDef GPIO_InitStructure;	
@@ -271,6 +287,9 @@ void System_Enter_StopMode(void)
 	HAL_UART_MspDeInit(&huart1);//缺省串口1设备	
 	HAL_UART_MspDeInit(&huart2);//缺省串口2设备			
 	
+  __HAL_RCC_USART1_CLK_ENABLE();//关闭外设时钟
+  __HAL_RCC_USART2_CLK_ENABLE();
+
 	//除了休眠唤醒引脚、其余皆设置为模拟输入
 	GPIO_InitStructure.Pin  = J1_1_Pin|J1_2_Pin|J1_4_Pin|J1_5_Pin|AD7193_PWR_SWITCH_Pin| \
 	TEMPER_SIN_Pin|DEV_LED_Pin|TEMPER_PWR_SWITCH_Pin|BMI160_PWR_SWITCH_Pin;
@@ -292,20 +311,61 @@ void System_Enter_StopMode(void)
 	__HAL_RCC_GPIOA_CLK_DISABLE();	
 	//__HAL_RCC_GPIOB_CLK_DISABLE();	//PB0  -> EXT_TRIG_SINGAL
 	//__HAL_RCC_GPIOC_CLK_DISABLE();  //PC15 -> KEY_BUTTON_SINGAL
+
+  __HAL_RCC_PWR_CLK_ENABLE();
+  HAL_PWR_EnableBkUpAccess();
   HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI); // 进入停止模式（这边配置的是STOP2） 
 }
 
 /*
-  从停止模式下唤醒，重新配置时钟
+  从停止模式下唤醒，重新配置时钟及外设
 */
-void SystemClock_ReConfig_When_Exit_StopMode(void)
+void System_ReConfig_When_Exit_StopMode(void)
 {
   __HAL_RCC_MSI_RANGE_CONFIG(RCC_MSIRANGE_11);// 配置MSI为48MHz
-	
   while (__HAL_RCC_GET_FLAG(RCC_FLAG_MSIRDY) == RESET);//等待准备就绪
 	
   __HAL_RCC_SYSCLK_CONFIG(RCC_SYSCLKSOURCE_MSI);  //配置MSI为系统时钟源
   while (__HAL_RCC_GET_SYSCLK_SOURCE()== RESET);  //等待准备就绪
+
+  MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_I2C1_Init();  //for BMI160
+  MX_SPI3_Init();  //for AD7193
+  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();	
+
+	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
+	{
+    printf("BMI160 Init failed...\r\n");
+    while(1)
+    {
+      HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+      HAL_Delay(150);//LED闪烁指示
+    }
+	}	
+	if(DEVICE_INIT_OK!=ad7193_init())//设备初始化失败
+	{
+		printf("AD7193 Init failed...\r\n");		
+		while(1)
+		{
+			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+			HAL_Delay(100);//LED闪烁指示
+		}
+	}
+	//通道预校准
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
+
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
+
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+
 }
 
 /**
@@ -348,7 +408,7 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   // 需要配置的时钟HCLK(APB1/APB2总线时钟源)、SYSCLK(系统时钟源)、PCLK1(APB1上外设时钟源)、PCLK2(APB2上外设时钟源)
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_MSI;// 配置系统时钟为MSI输入，48MHz
   RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;     // AHB时钟为系统时钟1分频，48MHz/1 =48MHz
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;       // APB1时钟为系统时钟1分频，48MHz/1 =48MHz
@@ -380,15 +440,11 @@ void SystemClock_Config(void)
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   PeriphClkInit.I2c1ClockSelection   = RCC_I2C1CLKSOURCE_PCLK1;  
 
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
+   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) Error_Handler();
+  
   // 配置内部主稳压器输出电压，配置为稳压器输出电压范围1模式，也就是：典型输出电压为1.2V，系统频率高达80MHz
-  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK) Error_Handler();
+
   // 配置系统定时器中断时间，配置为HCLK的千分频
   HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
   // 配置系统定时器，配置为HCLK
@@ -420,16 +476,16 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
   
-  // //模拟滤波配置
-  // if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  // {
-  //   Error_Handler();
-  // }
-  // //数字滤波配置
-  // if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-  // {
-  //   Error_Handler();
-  // }
+  //模拟滤波配置
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  //数字滤波配置
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
   
 }
 
@@ -446,10 +502,10 @@ static void MX_I2C1_Init(void)
  */
 static void MX_IWDG_Init(void)
 {
-  hiwdg.Instance = IWDG; // 配置为IWDG
+  hiwdg.Instance       = IWDG; // 配置为IWDG
   hiwdg.Init.Prescaler = IWDG_PRESCALER_32;// 32分频，prer = 3
-  hiwdg.Init.Window = IWDG_WINDOW_DISABLE;
-  hiwdg.Init.Reload = 1000;
+  hiwdg.Init.Window    = IWDG_WINDOW_DISABLE;
+  hiwdg.Init.Reload    = 1000;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
     Error_Handler();
@@ -474,7 +530,7 @@ static void MX_SPI3_Init(void)
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase    = SPI_PHASE_1EDGE;
   hspi3.Init.NSS         = SPI_NSS_SOFT;             //NSS为软件控制    
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;//配置SPI3分频系数 SPI最高频率有限制
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;//配置SPI3分频系数 SPI最高频率有限制
   hspi3.Init.FirstBit    = SPI_FIRSTBIT_MSB;   
   hspi3.Init.TIMode      = SPI_TIMODE_DISABLE;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

@@ -12,20 +12,20 @@ unsigned char currentGain     = 1;
 
 unsigned char ad7193_init(void)
 {
-    unsigned char status = 0;//OK
-    unsigned char regVal = 0;
-    
-		ad7193_reset();//保证调试上电后同步。
-	  HAL_Delay(1);//上电自动复位后，延时>=500us
-	
-    regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取目标寄存器值
-	
-    if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//FAIL
+		unsigned char status = 0;//OK
+		unsigned char regVal = 0;
 
-		ad7193_reset();
+		ad7193_reset();//保证调试上电后同步。
+		HAL_Delay(1);//上电自动复位后，延时>=500us
+
+		regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取配置寄存器值
+
+		if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//判断IC是否挂载
+
+		ad7193_reset(); //读取挂载成功，则再次复位IC
 		HAL_Delay(1);	
-	
-    return status;
+
+		return status;
 }
 
 /***************************************************************************//**
@@ -134,7 +134,8 @@ void ad7193_setpower(unsigned char pwrMode)
 *******************************************************************************/
 void ad7193_wait_ready_go_low(void)
 {
-    while(AD7193_RDY_STATE){;}
+	//当获得转换结果时，DOUT/RDY便会变为低电平
+    while(AD7193_RDY_STATE){}
 }
 
 /***************************************************************************//**

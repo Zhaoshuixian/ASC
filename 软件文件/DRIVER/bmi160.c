@@ -1398,10 +1398,8 @@ int8_t bmi160_set_regs(uint8_t reg_addr, uint8_t *data, uint16_t len, const stru
             (dev->prev_gyro_cfg.power == BMI160_GYRO_NORMAL_MODE))
         {
             rslt = dev->write(dev->id, reg_addr, data, len);
-
             /* Kindly refer bmi160 data sheet section 3.2.4 */
-            dev->delay_ms(1);
-
+            dev->delay_ms(1);// I2C Access Restriction After Writting Operation > 2us/450us
         }
         else
         {
@@ -1411,10 +1409,8 @@ int8_t bmi160_set_regs(uint8_t reg_addr, uint8_t *data, uint16_t len, const stru
             {
                 rslt = dev->write(dev->id, reg_addr, &data[count], 1);
                 reg_addr++;
-
                 /* Kindly refer bmi160 data sheet section 3.2.4 */
-                dev->delay_ms(1);
-
+                dev->delay_ms(1);// I2C Access Restriction After Writting Operation > 2us/450us
             }
         }
         if (rslt != BMI160_OK)
@@ -1445,7 +1441,7 @@ int8_t bmi160_init(struct bmi160_dev *dev)
      * if SPI is used */
     if ((rslt == BMI160_OK) && (dev->interface == BMI160_SPI_INTF))//SPI模式
     {
-        rslt = bmi160_get_regs(BMI160_SPI_COMM_TEST_ADDR, &data, 1, dev);//SPI接口测试
+        rslt = bmi160_get_regs(BMI160_SPI_COMM_TEST_ADDR, &data, 1, dev);//SPI接口测试(probe)
     }
     if (rslt == BMI160_OK)
     {
