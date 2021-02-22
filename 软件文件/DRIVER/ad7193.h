@@ -94,7 +94,7 @@
 #define AD7193_CONF_GAIN(x)     ((x) & 0x7)          // Gain Select.
 
 /* Configuration Register: AD7193_CONF_CHAN(x) options */
-//                            Pseudo Bit = 0           Pseudo Bit = 1
+//                     Pseudo Bit = 0(差分模式4路)    Pseudo Bit = 1（非差分8路）
 #define AD7193_CH_0      0 // AIN1(+) - AIN2(-);       AIN1 - AINCOM
 #define AD7193_CH_1      1 // AIN3(+) - AIN4(-);       AIN2 - AINCOM
 #define AD7193_CH_2      2 // AIN5(+) - AIN6(-);       AIN3 - AINCOM
@@ -157,11 +157,10 @@ unsigned int ad7193_single_conversion(void);
 /*! Returns the average of several conversion results. */
 unsigned int ad7193_continuous_readavg(unsigned char sampleNumber);
 /*! Read data from temperature sensor and converts it to Celsius degrees. */
-#if 0
-float ad7193_temperature_read(void);
-#else
+
+float ad7193_temperature_read1(void);
 float ad7193_temperature_read(unsigned int dataReg);
-#endif
+
 /*! Converts 24-bit raw data to volts. */
 float ad7193_convert_to_volts(unsigned int rawData, float vRef);
 

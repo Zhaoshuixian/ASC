@@ -101,7 +101,7 @@ unsigned int ad7193_get_register_value(unsigned char registerAddress,unsigned ch
  
     registerWord[0] = AD7193_COMM_READ |AD7193_COMM_ADDR(registerAddress);//寄存器地址
 
-	  if(modifyCS) PMOD1_CS_LOW; //使能SPI
+  	if(modifyCS) PMOD1_CS_LOW; //使能SPI
 		
     SPI_Read(AD7193_SLAVE_ID * modifyCS, registerWord, bytesNumber + 1);// registerWord[0]/registerWord[1]
 		
@@ -143,7 +143,7 @@ void ad7193_reset(void)
 		
     PMOD1_CS_LOW; 
     SPI_Write(AD7193_SLAVE_ID, registerWord, 6);
-		PMOD1_CS_HIGH;
+	  PMOD1_CS_HIGH;
 
 }
 
@@ -185,9 +185,18 @@ void ad7193_wait_ready_go_low(void)
     于关断模式或空闲模式时，或者当SYNC变为低电平时，此位也会置1。DOUT/RDY引脚也会指示转
     换何时结束。该引脚可以代替状态寄存器来监视ADC有无转换数据。    
     */
-   unsigned int wait_timeout = 0xFFFFF;
+
+    /*RDY在读取数据寄存器之后返回高电平。
+     在单次转换模式和连续转换模式下，当RDY为高电平时，如果需要，可以再次读取同一数据，
+     但应确保后续读取操作的发生时间不能接近下一次输出更新时间。
+     如果使能连续读取功能，数字字只能被读取一次。
+   */
+   //unsigned int wait_timeout = 0xFFFFF;
     //当获得转换结果时，DOUT/RDY便会变为低电平，表示转换完成
-    while(AD7193_RDY_STATE&&wait_timeout--)
+    //while(AD7193_RDY_STATE&&wait_timeout--)
+	
+    unsigned int wait_timeout = 0xFFFF;
+    while(AD7193_RDY_STATE&&wait_timeout--)//设置一个超时时间，限制阻塞时长。
     {
 
     }
@@ -364,7 +373,7 @@ unsigned int ad7193_continuous_readavg(unsigned char sampleNumber)
 	  #endif
 	
     PMOD1_CS_LOW;
-	  //配置模式寄存器数据
+	//配置模式寄存器数据
     ad7193_set_register_value(AD7193_REG_MODE, command, 3, 0); //
     for(count = 0; count < sampleNumber; count++)
     {
@@ -382,8 +391,8 @@ unsigned int ad7193_continuous_readavg(unsigned char sampleNumber)
  *
  * @return temperature - Celsius degrees.
 *******************************************************************************/
-#if 0
-float ad7193_temperature_read(void)
+
+float ad7193_temperature_read1(void)
 {
     unsigned int dataReg     = 0;
     float temperature = 0;    
@@ -395,9 +404,8 @@ float ad7193_temperature_read(void)
     -- 温度(°C) = 温度(K) − 273
     单点校准之后，内部温度传感器的精度典型值为±2℃。
  */  
-    //dataReg = ad7193_single_conversion();//执行单次转换
+    dataReg = ad7193_single_conversion();//执行单次转换
 	
-//	  dataReg = ad7193_continuous_readavg(5);//连续转换
     dataReg -=0x800000;
     temperature = (float)dataReg / 2815;    // 开氏温度
     temperature -= 273;  // 摄氏温度
@@ -405,7 +413,6 @@ float ad7193_temperature_read(void)
     return temperature;
 }
 
-#else
 float ad7193_temperature_read(unsigned int dataReg)
 {
 
@@ -419,12 +426,12 @@ float ad7193_temperature_read(unsigned int dataReg)
     单点校准之后，内部温度传感器的精度典型值为±2℃。
  */  
     dataReg -=0x800000;
-    temperature = (float)dataReg / 2815;    // 开氏温度
+    temperature = (float)dataReg / 2815.0;    // 开氏温度
     temperature -= 273;  // 摄氏温度
     
     return temperature;
 }
-#endif
+
 
 /***************************************************************************//**
  * @brief Converts 24-bit raw data to volts.
@@ -440,7 +447,6 @@ float ad7193_convert_to_volts(unsigned int rawData, float vRef)
 
 /*
     当ADC配置为单极性工作模式时：输出码 = (2^N × AIN × 增益)/VREF
-                            
     当ADC配置为双极性工作模式时：输出码 = 2^(N – 1) × [(AIN × 增益/VREF) + 1]
                             
     其中：
