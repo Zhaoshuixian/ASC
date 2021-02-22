@@ -99,15 +99,17 @@
 #define AD7193_CH_1      1 // AIN3(+) - AIN4(-);       AIN2 - AINCOM
 #define AD7193_CH_2      2 // AIN5(+) - AIN6(-);       AIN3 - AINCOM
 #define AD7193_CH_3      3 // AIN7(+) - AIN8(-);       AIN4 - AINCOM
+
 #define AD7193_CH_4      4 // AIN1(+) - AIN2(-);       AIN5 - AINCOM
 #define AD7193_CH_5      5 // AIN3(+) - AIN4(-);       AIN6 - AINCOM
 #define AD7193_CH_6      6 // AIN5(+) - AIN6(-);       AIN7 - AINCOM
 #define AD7193_CH_7      7 // AIN7(+) - AIN8(-);       AIN8 - AINCOM
+
 #define AD7193_CH_TEMP   8 // Temperature sensor
 #define AD7193_CH_SHORT  9 // AIN2(+) - AIN2(-);       AINCOM(+) - AINCOM(-) 
 
 /* Configuration Register: AD7193_CONF_GAIN(x) options */
-//                                             ADC Input Range (5 V Reference)
+//                            ADC Input Range (5 V Reference)
 #define AD7193_CONF_GAIN_1		0 // Gain 1    +-2.5 V
 #define AD7193_CONF_GAIN_8		3 // Gain 8    +-312.5 mV
 #define AD7193_CONF_GAIN_16		4 // Gain 16   +-156.2 mV
@@ -135,9 +137,9 @@
 /*! Checks if the AD7139 part is present. */
 unsigned char ad7193_init(void);
 /*! Writes data into a register. */
-void ad7193_set_register_value(unsigned char registerAddress,unsigned long registerValue,unsigned char bytesNumber,unsigned char modifyCS);
+void ad7193_set_register_value(unsigned char registerAddress,unsigned int registerValue,unsigned char bytesNumber,unsigned char modifyCS);
 /*! Reads the value of a register. */
-unsigned long ad7193_get_register_value(unsigned char registerAddress,unsigned char bytesNumber,unsigned char modifyCS);
+unsigned int ad7193_get_register_value(unsigned char registerAddress,unsigned char bytesNumber,unsigned char modifyCS);
 /*! Resets the device. */
 void ad7193_reset(void);
 /*! Set device to idle or power-down. */
@@ -147,17 +149,21 @@ void ad7193_wait_ready_go_low(void);
 /*! Selects the channel to be enabled. */
 void ad7193_channel_select(unsigned short channel);
 /*! Performs the given calibration to the specified channel. */
-void ad7193_calibrate(unsigned char mode, unsigned char channel);
+void ad7193_calibrate(unsigned char mode, unsigned short channel);
 /*! Selects the polarity of the conversion and the ADC input range. */
 void ad7193_range_setup(unsigned char polarity, unsigned char range);
 /*! Returns the result of a single conversion. */
-unsigned long ad7193_single_conversion(void);
+unsigned int ad7193_single_conversion(void);
 /*! Returns the average of several conversion results. */
-unsigned long ad7193_continuous_readavg(unsigned char sampleNumber);
+unsigned int ad7193_continuous_readavg(unsigned char sampleNumber);
 /*! Read data from temperature sensor and converts it to Celsius degrees. */
-unsigned long ad7193_temperature_read(void);
+#if 0
+float ad7193_temperature_read(void);
+#else
+float ad7193_temperature_read(unsigned int dataReg);
+#endif
 /*! Converts 24-bit raw data to volts. */
-float ad7193_convert_to_volts(unsigned long rawData, float vRef);
+float ad7193_convert_to_volts(unsigned int rawData, float vRef);
 
 void ad7193_bpdsw_set(unsigned char set_val);
 #endif /* __AD7193_H__ */

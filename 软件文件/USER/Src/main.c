@@ -55,12 +55,12 @@ static void System_ReConfig_When_Exit_StopMode(void);
 /*任务执行时间*/
 #define LED_TASK_TIME     (500/SYSTEM_TICK_TIME)   //500ms
 #define BMI160_TASK_TIME  (1000/SYSTEM_TICK_TIME)  //1000ms
-#define AD7193_TASK_TIME  (1000/SYSTEM_TICK_TIME)  //1000ms
+#define AD7193_TASK_TIME  (500/SYSTEM_TICK_TIME)  //1000ms
 #define TEMPER_TASK_TIME  (10/SYSTEM_TICK_TIME)    //10ms
 #define KEY_TASK_TIME     (20/SYSTEM_TICK_TIME)    //20ms
 
-unsigned long chip_temperature=0;
-unsigned long ch_raw_avg_data[4]={0};
+float chip_temperature=0;
+unsigned int ch_raw_avg_data[5]={0};
 float ch_volt[4]={0.0};
 
 #define DEBUG_MODE
@@ -143,7 +143,7 @@ void device_led_contrl(void)
 */
 void device_ad7193_read(void)
 {
-	static  unsigned int prv_chip_temperature;
+	static  float prv_chip_temperature;
 	static  float prv_ch_volt[4];	
 /*
 如果使能多个通道，则每次切换通道时，ADC会给滤波器留出完整的建立时间，以便产生有效转换结果。
@@ -156,20 +156,20 @@ AD7193将通过以下序列自动处理这种状况：
 5. 当ADC在下一个通道上执行转换时，用户可以读取数据寄存器。
 
 */
-	//ch1_raw_avg_data = ad7193_single_conversion();//单次转换
-	ch_raw_avg_data[0] = ad7193_continuous_readavg(10);//连续转换
-	ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);	
+	 ch_raw_avg_data[0] = ad7193_continuous_readavg(10);//连续转换
+	 ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);	
 
-	// ch_raw_avg_data[1] = ad7193_continuous_readavg(10);	
-  // ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);	
+	 ch_raw_avg_data[1] = ad7193_continuous_readavg(5);	
+   ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);	
 	
-	// ch_raw_avg_data[2] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-  // ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);/*Converts 24-bit raw data to volts. */	
+	 ch_raw_avg_data[2] = ad7193_continuous_readavg(5);/* Returns the average of several conversion results.*/
+   ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);/*Converts 24-bit raw data to volts. */	
 	
-	// ch_raw_avg_data[3] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-  // ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);	 /*Converts 24-bit raw data to volts. */	
-	
-  chip_temperature = ad7193_temperature_read();	/* Read the temperature. */	
+	 ch_raw_avg_data[3] = ad7193_continuous_readavg(5);/* Returns the average of several conversion results.*/
+   ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);	 /*Converts 24-bit raw data to volts. */
+	 
+	 ch_raw_avg_data[4] = ad7193_continuous_readavg(5);
+   chip_temperature = ad7193_temperature_read(ch_raw_avg_data[4]);	/* Read the temperature. */	
 
 #ifdef DEBUG_MODE
   for(unsigned char i=0;i< 4;i++)
@@ -183,7 +183,7 @@ AD7193将通过以下序列自动处理这种状况：
   if(prv_chip_temperature != chip_temperature)
   {
      prv_chip_temperature = chip_temperature;
-     printf("Current Chip temperature is %d.C...\r\n",prv_chip_temperature);
+     printf("Current Chip temperature is %f.C...\r\n",prv_chip_temperature);
   }
 #endif
 }
@@ -235,14 +235,17 @@ void device_temper_read(void)
 int main(void)
 {
   HAL_Init();
+	
 	__TODO:	
   SystemClock_Config();
   MX_GPIO_Init();
+  //HAL_Delay(3000);	//等待电源稳定
   MX_DMA_Init();
   MX_I2C1_Init();  //for BMI160
   MX_SPI3_Init();  //for AD7193
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();	
+	  
 //	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 //	{
 //		  printf(">> BMI160 Init failed...\r\n");
@@ -254,6 +257,8 @@ int main(void)
 //	}	
 	/*
 		AD7193具体步骤：
+		
+		
 		1.Init
 		2.Reset
 		3.Calibrate(zero&full)  <-> 校准
@@ -279,39 +284,25 @@ int main(void)
   ad7193_reset(); //// Resets the device.
 	HAL_Delay(1);	// >500us 
 	//通道零点和量程进行预校准
-   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
-	// HAL_Delay(1);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
-	// HAL_Delay(1);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
-	// HAL_Delay(1);	
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
-	// HAL_Delay(1);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
-	// HAL_Delay(1);	
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
-	// HAL_Delay(1);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
-	// HAL_Delay(1);	
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
- 	// HAL_Delay(1);	 
-	
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2); 
+  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
   ad7193_range_setup(0, AD7193_CONF_GAIN_1);/* Select Bipolar operation and ADC's input range to +-2.5V. */
-  HAL_Delay(1);	  
-  // ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
-  // HAL_Delay(1);	  
-  // ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
-  // HAL_Delay(1);	  
-  // ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
-  // HAL_Delay(1);	  
-  // ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
-  // HAL_Delay(1);	
+  ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
+  ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
+  ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
+  ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
   ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道	
-  HAL_Delay(1);	
+	HAL_Delay(1);
   //ad7193_bpdsw_set(1);
 	#ifdef DEBUG_MODE
   printf("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
-  printf("\r\n------------Make Data: %s-%s-----------\r\n",(const char *)__TIME__,(const char *)__DATE__);
+  printf("\r\n------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);
   printf("\r\n------------------All Init OK------------------------\r\n");
   #endif
 	//MX_IWDG_Init();
@@ -320,20 +311,18 @@ int main(void)
     if(1!= SleepMode_Enter_Flag)//1. -> NORMAL MODE
     {
       //1.1 -- LED TASK--	
-      //tasks_create(device_led_contrl, LED_TASK_TIME,    1); //OK
+      tasks_create(device_led_contrl, LED_TASK_TIME,    1); //OK
       //1.2 -- BMI160 TASK--	
       //tasks_create(device_bmi160_read,BMI160_TASK_TIME, 2);
       //1.3 -- AD7193 TASK--
-      //tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
+      tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
       //1.4 -- KEY_BUTTON TASK--	
       //tasks_create(device_key_read,   KEY_TASK_TIME,    4);//OK    
       //1.5 -- EXT TEMPER_SENSOR TASK--
       //tasks_create(device_temper_read,TEMPER_TASK_TIME, 5);    
       //1.6 -- EXT_TRIG_SINGAL TASK--
-			
-			device_ad7193_read();
-			HAL_Delay(200);
-			
+//			device_ad7193_read();
+//			HAL_Delay(500);
     }
     else//2. -> SLEEP MODE 
     {

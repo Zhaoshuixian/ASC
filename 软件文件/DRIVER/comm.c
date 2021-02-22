@@ -103,12 +103,8 @@ unsigned char SPI_Init(unsigned char lsbFirst,unsigned long clockFreq,unsigned c
 *******************************************************************************/
 unsigned char SPI_Read(unsigned char slaveDeviceId,unsigned char* data,unsigned char bytesNumber)
 {
-  if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_LOW;//使能SPI
-	
   HAL_SPI_Receive(&hspi3,data,bytesNumber,0xFFFF);
-	
-	if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_HIGH;
-	
+
 	return bytesNumber;	
 }
 
@@ -123,11 +119,8 @@ unsigned char SPI_Read(unsigned char slaveDeviceId,unsigned char* data,unsigned 
 *******************************************************************************/
 unsigned char SPI_Write(unsigned char slaveDeviceId,unsigned char* data,unsigned char bytesNumber)
 {
-   PMOD1_CS_LOW; //使能SPI
-	
+
   HAL_SPI_Transmit(&hspi3,data,bytesNumber,0xFFFF);
-	
-	PMOD1_CS_HIGH;
 	
 	return bytesNumber;
 }
