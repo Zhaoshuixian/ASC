@@ -10,9 +10,8 @@ signed char bmi160_rd(unsigned char dev_addr, unsigned char reg_addr, unsigned c
 {
 
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,2000);//1.发起读操作 ,写目标寄存器命令
-	//HAL_Delay(1);
-	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,2000);    //2.接收目标寄存器值数据
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,0xFFFF);//1.发起读操作 ,写目标寄存器命令
+	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,0xFFFF);    //2.接收目标寄存器值数据
 	
 	return 0;	
 }
@@ -31,8 +30,8 @@ signed char bmi160_wr(unsigned char dev_addr, unsigned char reg_addr, unsigned c
 	tx_msg[0]=reg_addr;
 	memcpy(&tx_msg[1],data,len);//合并数据至MSG缓存区,按照一帧格式传输
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&tx_msg[0],len+1,2000);   //寄存器地址和数据连续写入
-   // HAL_Delay(1);
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&tx_msg[0],len+1,0xFFFF);   //寄存器地址和数据连续写入
+
 	return 0;
 }
 
@@ -65,8 +64,6 @@ unsigned char bmi160_bsp_init(struct bmi160_dev *me)
 	me->delay_ms  = HAL_Delay;      //MS级别延时函数
 
 	int8_t rslt = BMI160_OK;
-	
-  //bmi160_soft_reset(me);
 	
 	rslt = bmi160_init(me);        //初始化配置
 

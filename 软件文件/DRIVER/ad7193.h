@@ -7,7 +7,7 @@
 #include "stm32l4xx_ll_gpio.h"
 
 //
-#define   MISO_STATE      HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4)//PB4
+#define   MISO_STATE      HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4)//PB4 RDY/DOUT/MISO
 #define   PMOD1_CS_LOW    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_15,GPIO_PIN_RESET)//PA15--AFIO
 #define   PMOD1_CS_HIGH   HAL_GPIO_WritePin(GPIOA,GPIO_PIN_15,GPIO_PIN_SET)//PA15--AFIO
 
@@ -159,4 +159,5 @@ unsigned long ad7193_temperature_read(void);
 /*! Converts 24-bit raw data to volts. */
 float ad7193_convert_to_volts(unsigned long rawData, float vRef);
 
+void ad7193_bpdsw_set(unsigned char set_val);
 #endif /* __AD7193_H__ */

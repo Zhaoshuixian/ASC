@@ -5,7 +5,15 @@
 	Create Data: 2021/02/02
 	Modify Data: 2021/02/03
 	
-	Author By:   Zhao Shuixian
+	Author By:   ZhaoShuixian
+
+  Brief：
+  1. 实现多任务调度功能，调度最大速率1ms
+  2. 实现LED功能
+  3. 实现按键功能
+  4. 实现串口USART1打印功能
+  5. 
+
 */
 
 
@@ -39,16 +47,25 @@ static void MX_USART2_UART_Init(void);
 static void MX_IWDG_Init(void);
 static void IWDG_Feed(void);
 
+static void System_Config_When_Enter_StopMode(void);
+static void System_ReConfig_When_Exit_StopMode(void);
+
+/*系统时基时间*/
+#define SYSTEM_TICK_TIME  (1)//1ms
 /*任务执行时间*/
-#define LED_TASK_TIME     (500)
-#define BMI160_TASK_TIME  (10)
-#define AD7193_TASK_TIME  (10)
-#define TEMPER_TASK_TIME  (10)
-#define KEY_TASK_TIME     (20)
+#define LED_TASK_TIME     (500/SYSTEM_TICK_TIME)   //500ms
+#define BMI160_TASK_TIME  (1000/SYSTEM_TICK_TIME)  //1000ms
+#define AD7193_TASK_TIME  (1000/SYSTEM_TICK_TIME)  //1000ms
+#define TEMPER_TASK_TIME  (10/SYSTEM_TICK_TIME)    //10ms
+#define KEY_TASK_TIME     (20/SYSTEM_TICK_TIME)    //20ms
 
 unsigned long chip_temperature=0;
-unsigned long ch1_raw_avg_data=0,ch2_raw_avg_data=0,ch3_raw_avg_data=0,ch4_raw_avg_data=0;
-float ch1_volt=0.0,ch2_volt=0.0,ch3_volt=0.0,ch4_volt=0.0;
+unsigned long ch_raw_avg_data[4]={0};
+float ch_volt[4]={0.0};
+
+#define DEBUG_MODE
+
+
 
 /*
 进低功耗前的配置：
@@ -73,7 +90,9 @@ stop模式下停止看门狗计数
 */
 
 
-//串口打印重映射
+/*
+**串口打印重映射
+*/
 int fputc(int ch, FILE *f)
 {
   // 配置格式化输出到串口USART1
@@ -95,7 +114,11 @@ int fputc(int ch, FILE *f)
 3.程序从外部中断回调处继续运行
 
 */
-void device_led_toggle(void)
+
+/*
+**LED状态控制
+*/
+void device_led_contrl(void)
 {
   switch(LED_Status_Flag)
   {
@@ -109,41 +132,73 @@ void device_led_toggle(void)
           HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
            break;
      case 3://眨闪
-			    HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_RESET);
-		      HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
+			    // HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_RESET);
+		      // HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
            break;         
   }
-
 }
 
+/*
+**AD7193相关数据读取
+*/
 void device_ad7193_read(void)
 {
-  ad7193_range_setup(1, AD7193_CONF_GAIN_1);/* Select unipolar operation and ADC's input range to +-2.5V. */		
+	static  unsigned int prv_chip_temperature;
+	static  float prv_ch_volt[4];	
+/*
+如果使能多个通道，则每次切换通道时，ADC会给滤波器留出完整的建立时间，以便产生有效转换结果。
+AD7193将通过以下序列自动处理这种状况：
 
-//  ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-) */
-//	ch1_raw_avg_data = ad7193_continuous_readavg(10);
-//  ch1_volt = ad7193_convert_to_volts(ch1_raw_avg_data,5.0);	
-//	
-//  ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
-//	ch2_raw_avg_data = ad7193_continuous_readavg(10);	
-//  ch2_volt = ad7193_convert_to_volts(ch2_raw_avg_data,5.0);	
-//	
-//  ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */
-//	ch3_raw_avg_data = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-//  ch3_volt = ad7193_convert_to_volts(ch3_raw_avg_data,5.0);/*Converts 24-bit raw data to volts. */	
-//	
-//  ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
-//	ch4_raw_avg_data = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-//  ch4_volt = ad7193_convert_to_volts(ch4_raw_avg_data,5.0);	 /*Converts 24-bit raw data to volts. */	
+1. 选择某个通道时，调制器和滤波器将复位。
+2. AD7193允许完整的建立时间以产生有效转换结果。
+3. DOUT/RDY会在有效转换结果可用时给出提示。
+4. AD7193选择下一个使能通道，并在该通道上执行转换。
+5. 当ADC在下一个通道上执行转换时，用户可以读取数据寄存器。
+
+*/
+	//ch1_raw_avg_data = ad7193_single_conversion();//单次转换
+	ch_raw_avg_data[0] = ad7193_continuous_readavg(10);//连续转换
+	ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);	
+
+	// ch_raw_avg_data[1] = ad7193_continuous_readavg(10);	
+  // ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);	
+	
+	// ch_raw_avg_data[2] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
+  // ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);/*Converts 24-bit raw data to volts. */	
+	
+	// ch_raw_avg_data[3] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
+  // ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);	 /*Converts 24-bit raw data to volts. */	
 	
   chip_temperature = ad7193_temperature_read();	/* Read the temperature. */	
+
+#ifdef DEBUG_MODE
+  for(unsigned char i=0;i< 4;i++)
+  {
+    if(prv_ch_volt[i]!=ch_volt[i])
+    {
+      prv_ch_volt[i] = ch_volt[i];
+      printf("CH%d Volts is %0.2fV...\r\n",i,prv_ch_volt[i]);		 
+    }    
+  }
+  if(prv_chip_temperature != chip_temperature)
+  {
+     prv_chip_temperature = chip_temperature;
+     printf("Current Chip temperature is %d.C...\r\n",prv_chip_temperature);
+  }
+#endif
 }
 
+/*
+**BMI160相关数据读取
+*/
 void device_bmi160_read(void)
 {
 
 }
 
+/*
+**按键状态读取及处理
+*/
 void device_key_read(void)
 {
   static uint8_t last_key,now_key,key_count;
@@ -154,15 +209,20 @@ void device_key_read(void)
   //按键动作变化处理
   if(last_key!=now_key)
   {
-		printf("The Key has Trigged...\r\n");		
     if(0!=now_key)//按下
     {
+      #ifdef DEBUG_MODE
+		  printf(">> The Key Pessed !!!\r\n");	
+      #endif	
 			(0==++key_count%2)?(LED_Status_Flag=0):(LED_Status_Flag=1);
     }   
   }
 	last_key = now_key;
 }
 
+/*
+**外部温度传感器读取
+*/
 void device_temper_read(void)
 {
 
@@ -175,6 +235,7 @@ void device_temper_read(void)
 int main(void)
 {
   HAL_Init();
+	__TODO:	
   SystemClock_Config();
   MX_GPIO_Init();
   MX_DMA_Init();
@@ -182,10 +243,9 @@ int main(void)
   MX_SPI3_Init();  //for AD7193
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();	
-
 //	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 //	{
-//		  printf("BMI160 Init failed...\r\n");
+//		  printf(">> BMI160 Init failed...\r\n");
 //			while(1)
 //			{
 //				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
@@ -207,56 +267,86 @@ int main(void)
 	*/
 	if(DEVICE_INIT_OK!=ad7193_init())//设备初始化失败
 	{
-		printf("AD7193 Init failed...\r\n");		
+    #ifdef DEBUG_MODE
+		printf(">> AD7193 Init failed...\r\n");	
+    #endif	
 		while(1)
 		{
 			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
 			HAL_Delay(100);//LED闪烁指示
 		}
 	}
+  ad7193_reset(); //// Resets the device.
+	HAL_Delay(1);	// >500us 
 	//通道零点和量程进行预校准
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
-	HAL_Delay(1);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
-	HAL_Delay(1);
-//  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
-	HAL_Delay(1);	
-//  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
-	HAL_Delay(1);
-//  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
-	HAL_Delay(1);	
-//  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
-	HAL_Delay(1);
-//  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
-	HAL_Delay(1);	
-//  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
-  //MX_IWDG_Init();
-  printf("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
-  printf("\r\n--------------Make Data: %s-%s------------------\r\n",(const char *)__TIME__,(const char *)__DATE__);
-  printf("\r\n------------------All Init OK------------------------\r\n");
+   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
+	// HAL_Delay(1);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
+	// HAL_Delay(1);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+	// HAL_Delay(1);	
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+	// HAL_Delay(1);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+	// HAL_Delay(1);	
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
+	// HAL_Delay(1);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+	// HAL_Delay(1);	
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+ 	// HAL_Delay(1);	 
 	
+  ad7193_range_setup(0, AD7193_CONF_GAIN_1);/* Select Bipolar operation and ADC's input range to +-2.5V. */
+  HAL_Delay(1);	  
+  // ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
+  // HAL_Delay(1);	  
+  // ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
+  // HAL_Delay(1);	  
+  // ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
+  // HAL_Delay(1);	  
+  // ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
+  // HAL_Delay(1);	
+  ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道	
+  HAL_Delay(1);	
+  //ad7193_bpdsw_set(1);
+	#ifdef DEBUG_MODE
+  printf("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
+  printf("\r\n------------Make Data: %s-%s-----------\r\n",(const char *)__TIME__,(const char *)__DATE__);
+  printf("\r\n------------------All Init OK------------------------\r\n");
+  #endif
+	//MX_IWDG_Init();
   while (1)
   {
     if(1!= SleepMode_Enter_Flag)//1. -> NORMAL MODE
     {
-      //1.1 -- LED --	
-      task_sheduler(device_led_toggle, LED_TASK_TIME,    1); //OK
-      //1.2 -- BMI160 --	
-      //task_sheduler(device_bmi160_read,BMI160_TASK_TIME, 2);
-      //1.3 -- AD7193 --
-      task_sheduler(device_ad7193_read,AD7193_TASK_TIME, 3);    
-      //1.4 -- KEY_BUTTON --	
-      task_sheduler(device_key_read,   KEY_TASK_TIME,    4);    
-      //1.5 -- EXT TEMPER_SENSOR --
-      //task_sheduler(device_temper_read,TEMPER_TASK_TIME, 5);    
-      //1.6 -- EXT_TRIG_SINGAL --
+      //1.1 -- LED TASK--	
+      //tasks_create(device_led_contrl, LED_TASK_TIME,    1); //OK
+      //1.2 -- BMI160 TASK--	
+      //tasks_create(device_bmi160_read,BMI160_TASK_TIME, 2);
+      //1.3 -- AD7193 TASK--
+      //tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
+      //1.4 -- KEY_BUTTON TASK--	
+      //tasks_create(device_key_read,   KEY_TASK_TIME,    4);//OK    
+      //1.5 -- EXT TEMPER_SENSOR TASK--
+      //tasks_create(device_temper_read,TEMPER_TASK_TIME, 5);    
+      //1.6 -- EXT_TRIG_SINGAL TASK--
+			
+			device_ad7193_read();
+			HAL_Delay(200);
 			
     }
     else//2. -> SLEEP MODE 
     {
-      // System_Config_When_Enter_StopMode();
-      // System_ReConfig_When_Exit_StopMode();
-      while(1);
+      #ifdef DEBUG_MODE
+			printf(">> Enter Sleep...\r\n");
+      #endif
+      System_Config_When_Enter_StopMode();//
+      while(0!= SleepMode_Enter_Flag)
+			{
+				//等待外部中断动作
+			}
+			//printf(">> Exit Sleep...\r\n");
+			goto __TODO;//唤醒系统
     }
   }
 }
@@ -275,7 +365,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
 }
 /*
-系统进入休眠状态(停止模式)
+**系统进入休眠状态(停止模式)
 */
 void System_Config_When_Enter_StopMode(void)
 { 
@@ -318,7 +408,7 @@ void System_Config_When_Enter_StopMode(void)
 }
 
 /*
-  从停止模式下唤醒，重新配置时钟及外设
+**从停止模式下唤醒，重新配置时钟及外设
 */
 void System_ReConfig_When_Exit_StopMode(void)
 {
@@ -337,7 +427,9 @@ void System_ReConfig_When_Exit_StopMode(void)
 
 	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 	{
-    printf("BMI160 Init failed...\r\n");
+    #ifdef DEBUG_MODE
+    printf(">> BMI160 Init failed...\r\n");
+    #endif
     while(1)
     {
       HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
@@ -346,7 +438,9 @@ void System_ReConfig_When_Exit_StopMode(void)
 	}	
 	if(DEVICE_INIT_OK!=ad7193_init())//设备初始化失败
 	{
-		printf("AD7193 Init failed...\r\n");		
+    #ifdef DEBUG_MODE
+		printf(">> AD7193 Init failed...\r\n");		
+    #endif
 		while(1)
 		{
 			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
@@ -357,14 +451,14 @@ void System_ReConfig_When_Exit_StopMode(void)
   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
 
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+ ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+ ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
 
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
+ ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+ ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2);  
 
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+ ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+ ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
 
 }
 
@@ -400,7 +494,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.LSIState       = RCC_LSI_ON;   // 激活LSI时钟(32kHz低速内部RC振荡器时钟)
   RCC_OscInitStruct.MSIState       = RCC_MSI_ON;   // 激活MSI时钟(100KHz-48MHz多速内部RC振荡器时钟)
   RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange  = RCC_MSIRANGE_11; //配置为48MHz
+  RCC_OscInitStruct.MSIClockRange  =  RCC_MSIRANGE_11; //配置为48MHz
   RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_NONE; 
 	
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -440,8 +534,7 @@ void SystemClock_Config(void)
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   PeriphClkInit.I2c1ClockSelection   = RCC_I2C1CLKSOURCE_PCLK1;  
 
-   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) Error_Handler();
-  
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) Error_Handler();
   // 配置内部主稳压器输出电压，配置为稳压器输出电压范围1模式，也就是：典型输出电压为1.2V，系统频率高达80MHz
   if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK) Error_Handler();
 
@@ -471,22 +564,12 @@ static void MX_I2C1_Init(void)
   hi2c1.Init.GeneralCallMode  = I2C_GENERALCALL_DISABLE;
   hi2c1.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;
 
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)//配置初始化
-  {
-    Error_Handler();
-  }
-  
+	//配置初始化
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK) Error_Handler();
   //模拟滤波配置
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)  Error_Handler();
   //数字滤波配置
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK) Error_Handler();
 }
 
 /**
@@ -506,16 +589,18 @@ static void MX_IWDG_Init(void)
   hiwdg.Init.Prescaler = IWDG_PRESCALER_32;// 32分频，prer = 3
   hiwdg.Init.Window    = IWDG_WINDOW_DISABLE;
   hiwdg.Init.Reload    = 1000;
-  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK) Error_Handler();
 }
-/*独立看门狗喂狗函数，也就是清除计数值。*/
+
+/*
+**独立看门狗喂狗函数，也就是清除计数值。
+*/
 static void IWDG_Feed(void)
 {
   HAL_IWDG_Refresh(&hiwdg); 	// 喂狗
 }
+
 /**
   * @brief SPI3 Initialization Function
   * @param None
@@ -524,13 +609,13 @@ static void IWDG_Feed(void)
 static void MX_SPI3_Init(void)
 {
   hspi3.Instance         = SPI3;               //配置为SPI3          
-  hspi3.Init.Mode        = SPI_MODE_MASTER;   //配置为Master      
+  hspi3.Init.Mode        = SPI_MODE_MASTER;    //配置为Master      
   hspi3.Init.Direction   = SPI_DIRECTION_2LINES;
   hspi3.Init.DataSize    = SPI_DATASIZE_8BIT;     //8位数据模式
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase    = SPI_PHASE_1EDGE;
   hspi3.Init.NSS         = SPI_NSS_SOFT;             //NSS为软件控制    
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;//配置SPI3分频系数 SPI最高频率有限制
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;//配置SPI3分频系数 SPI最高频率有限制
   hspi3.Init.FirstBit    = SPI_FIRSTBIT_MSB;   
   hspi3.Init.TIMode      = SPI_TIMODE_DISABLE;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -538,10 +623,7 @@ static void MX_SPI3_Init(void)
   hspi3.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
   hspi3.Init.NSSPMode  = SPI_NSS_PULSE_ENABLE;
 	
-  if (HAL_SPI_Init(&hspi3) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  if (HAL_SPI_Init(&hspi3) != HAL_OK) Error_Handler();
 }
 
 /**
@@ -561,10 +643,8 @@ static void MX_USART1_UART_Init(void)
   huart1.Init.OverSampling   = UART_OVERSAMPLING_16; //16Bit过采样
   huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE; // 1位过采样禁能
   huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;// 没有串口高级功能初始化
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	
+  if (HAL_UART_Init(&huart1) != HAL_OK)  Error_Handler();
 }
 
 /**
@@ -584,10 +664,9 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.OverSampling   = UART_OVERSAMPLING_16;
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	
+  if (HAL_UART_Init(&huart2) != HAL_OK)  Error_Handler();
+
 }
 
 /**

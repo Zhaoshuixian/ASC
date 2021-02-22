@@ -11,7 +11,7 @@ void bmi160_pwr_switch(unsigned char x);
 void ad7193_pwr_switch(unsigned char x);
 void temp_pwr_switch(unsigned char x);
 
-void task_sheduler(void (*fuc)(),uint32_t task_time,uint8_t id)  ;
+void tasks_create(void (*fuc)(),uint32_t task_time,uint8_t id)  ;
 #endif
 
 

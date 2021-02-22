@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "misc.h": "c",
+        "ad7193.h": "c"
+    }
+}

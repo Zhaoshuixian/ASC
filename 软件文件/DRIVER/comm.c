@@ -105,7 +105,7 @@ unsigned char SPI_Read(unsigned char slaveDeviceId,unsigned char* data,unsigned 
 {
   if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_LOW;//使能SPI
 	
-  HAL_SPI_Receive(&hspi3,data,bytesNumber,5000);
+  HAL_SPI_Receive(&hspi3,data,bytesNumber,0xFFFF);
 	
 	if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_HIGH;
 	
@@ -123,11 +123,11 @@ unsigned char SPI_Read(unsigned char slaveDeviceId,unsigned char* data,unsigned 
 *******************************************************************************/
 unsigned char SPI_Write(unsigned char slaveDeviceId,unsigned char* data,unsigned char bytesNumber)
 {
-  if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_LOW; //使能SPI
+   PMOD1_CS_LOW; //使能SPI
 	
-  HAL_SPI_Transmit(&hspi3,data,bytesNumber,5000);
+  HAL_SPI_Transmit(&hspi3,data,bytesNumber,0xFFFF);
 	
-	if(AD7193_SLAVE_ID==slaveDeviceId) PMOD1_CS_HIGH;
+	PMOD1_CS_HIGH;
 	
 	return bytesNumber;
 }
