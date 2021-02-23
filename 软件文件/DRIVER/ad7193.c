@@ -2,31 +2,30 @@
 #include "ad7193.h"		// ad7193 definitions.
 
 /*
-polarity=	Sets the polarity value. Accepted values:
-0 - Bipolar mode.
-1 - Unipolar mode.
-range?	Displays the range value.
-range=	Sets the range value. Accepted values:
-0 - Gain=1. (Input voltage range must be +/-2500mV)
-3 - Gain=8. (Input voltage range must be +/-312.5mV)
-4 - Gain=16. (Input voltage range must be +/-156.2mV)
-5 - Gain=32. (Input voltage range must be +/-78.12mV)
-6 - Gain=64. (Input voltage range must be +/-39.06mV)
-7 - Gain=128.(Input voltage range must be +/-19.53mV)
-pseudoBit?	Displays the Pseudo Bit value (AD7193_REG_CONF).
-pseudoBit=	Sets the Pseudo Bit Value (AD7193_REG_CONF). Accepted values:
-0 - Disables the pseudo differential measuring.
-1 - Enables the pseudo differential measuring.
-register?	Displays the value of the data register (AD7193_REG_DATA) for specified channel. Accepted values:
-0..7 - selected channel.
-voltage?	Displays the voltage applied to specified channel. Accepted values:
-0..7 - selected channel.
+    polarity=	Sets the polarity value. Accepted values:
+    0 - Bipolar mode.
+    1 - Unipolar mode.
+    range?	Displays the range value.
+    range=	Sets the range value. Accepted values:
+    0 - Gain=1. (Input voltage range must be +/-2500mV)
+    3 - Gain=8. (Input voltage range must be +/-312.5mV)
+    4 - Gain=16. (Input voltage range must be +/-156.2mV)
+    5 - Gain=32. (Input voltage range must be +/-78.12mV)
+    6 - Gain=64. (Input voltage range must be +/-39.06mV)
+    7 - Gain=128.(Input voltage range must be +/-19.53mV)
+    pseudoBit?	Displays the Pseudo Bit value (AD7193_REG_CONF).
+    pseudoBit=	Sets the Pseudo Bit Value (AD7193_REG_CONF). Accepted values:
+    0 - Disables the pseudo differential measuring.
+    1 - Enables the pseudo differential measuring.
+    register?	Displays the value of the data register (AD7193_REG_DATA) for specified channel. Accepted values:
+    0..7 - selected channel.
+    voltage?	Displays the voltage applied to specified channel. Accepted values:
+    0..7 - selected channel.
 */
-
 
 unsigned char currentPolarity = 0;
 unsigned char currentGain     = 1;
-
+unsigned int temp_nRegValue =0;
 /***************************************************************************//**
  * @brief Checks if the AD7139 part is present.
  *
@@ -35,17 +34,17 @@ unsigned char currentGain     = 1;
 
 unsigned char ad7193_init(void)
 {
-		unsigned char status = 0;//OK
-		unsigned char regVal = 0;
+    unsigned char status = 0;//OK
+    unsigned char regVal = 0;
 
-		ad7193_reset();//保证调试上电后同步。
-		HAL_Delay(1);//上电自动复位后，延时>=500us
+    ad7193_reset();//保证调试上电后同步。
+    HAL_Delay(1);//上电自动复位后，延时>=500us
 
-		regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取配置寄存器值
+    regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取配置寄存器值
+temp_nRegValue =regVal;
+    if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//判断IC是否挂载
 
-		if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//判断IC是否挂载
-
-		return status;
+    return status;
 }
 
 
@@ -75,7 +74,7 @@ void ad7193_set_register_value(unsigned char registerAddress,unsigned int regist
         bytesNr --;
     }
     
-	  if(modifyCS) PMOD1_CS_LOW; //使能SPI
+	if(modifyCS) PMOD1_CS_LOW; //使能SPI
 		
     SPI_Write(AD7193_SLAVE_ID * modifyCS, writeCommand, bytesNumber + 1);	
 		
@@ -98,11 +97,11 @@ unsigned int ad7193_get_register_value(unsigned char registerAddress,unsigned ch
     unsigned int buffer          = 0x0;
     unsigned char i               = 0;
     
- 
     registerWord[0] = AD7193_COMM_READ |AD7193_COMM_ADDR(registerAddress);//寄存器地址
 
   	if(modifyCS) PMOD1_CS_LOW; //使能SPI
 		
+    //ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低		
     SPI_Read(AD7193_SLAVE_ID * modifyCS, registerWord, bytesNumber + 1);// registerWord[0]/registerWord[1]
 		
     if(modifyCS) PMOD1_CS_HIGH;	
@@ -123,7 +122,7 @@ unsigned int ad7193_get_register_value(unsigned char registerAddress,unsigned ch
 
 void ad7193_reset(void)
 {
-    unsigned char registerWord[6] = {0};
+    unsigned char registerWord[7] = {0};
 
  /*
   对DIN输入写入一连串的1，可以复位串行接口。如果在至
@@ -140,11 +139,10 @@ void ad7193_reset(void)
     registerWord[3] = 0xFF;
     registerWord[4] = 0xFF;
     registerWord[5] = 0xFF;
-		
+    registerWord[6] = 0xFF;		
     PMOD1_CS_LOW; 
-    SPI_Write(AD7193_SLAVE_ID, registerWord, 6);
+    SPI_Write(AD7193_SLAVE_ID, registerWord, 7);
 	  PMOD1_CS_HIGH;
-
 }
 
 /***************************************************************************//**
@@ -163,6 +161,7 @@ void ad7193_setpower(unsigned char pwrMode)
      unsigned int newPwrMode = 0x0; 
  
      oldPwrMode = ad7193_get_register_value(AD7193_REG_MODE, 3, 1);
+	   temp_nRegValue =oldPwrMode;
      oldPwrMode &= ~(AD7193_MODE_SEL(0x7));//清除模式选择位数据
      newPwrMode = oldPwrMode | AD7193_MODE_SEL((pwrMode * (AD7193_MODE_IDLE))|(!pwrMode * (AD7193_MODE_PWRDN)));
      ad7193_set_register_value(AD7193_REG_MODE, newPwrMode, 3, 1);  
@@ -191,15 +190,22 @@ void ad7193_wait_ready_go_low(void)
      但应确保后续读取操作的发生时间不能接近下一次输出更新时间。
      如果使能连续读取功能，数字字只能被读取一次。
    */
-   //unsigned int wait_timeout = 0xFFFFF;
-    //当获得转换结果时，DOUT/RDY便会变为低电平，表示转换完成
-    //while(AD7193_RDY_STATE&&wait_timeout--)
+	#if 1
+     //unsigned int wait_timeout = 0xFFFFF;
+     //当获得转换结果时，DOUT/RDY便会变为低电平，表示转换完成
+     //while(AD7193_RDY_STATE&&wait_timeout--)
 	
-    unsigned int wait_timeout = 0xFFFF;
-    while(AD7193_RDY_STATE&&wait_timeout--)//设置一个超时时间，限制阻塞时长。
-    {
+     unsigned int wait_timeout = 0xFFFF;
+     while(AD7193_RDY_STATE&&wait_timeout--)//设置一个超时时间，限制阻塞时长。
+     {
 
-    }
+     }
+#else
+    while(AD7193_RDY_STATE)
+    {
+       AD7193_RDY_STATE;
+    }   
+#endif		
 }
 
 /***************************************************************************//**
@@ -219,8 +225,10 @@ void ad7193_channel_select(unsigned short channel)
     unsigned int newRegValue = 0x0;   
      
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//读取目标寄存器值
+	  temp_nRegValue =oldRegValue;
     oldRegValue &= ~(AD7193_CONF_CHAN(0x3FF));                     //清除通道配置位数据
     newRegValue = oldRegValue | AD7193_CONF_CHAN(1 << channel);    //设置新值 
+	  temp_nRegValue =newRegValue;	
     ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1); //将新值重新写入寄存器
 }
 
@@ -234,19 +242,22 @@ void ad7193_channel_select(unsigned short channel)
 *******************************************************************************/
 void ad7193_calibrate(unsigned char mode, unsigned short channel)
 {
-    unsigned int oldRegValue = 0x0;
-    unsigned int newRegValue = 0x0;
+     unsigned int oldRegValue = 0x0;
+     unsigned int newRegValue = 0x0;
     
     ad7193_channel_select(channel);                                //选择通道
     
     oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 1);//读取模式寄存器数据
+	  temp_nRegValue =oldRegValue;	
     oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
+	  temp_nRegValue =oldRegValue;		
     newRegValue = oldRegValue | AD7193_MODE_SEL(mode);             //设置新值 
-	
+		temp_nRegValue =newRegValue;	
     PMOD1_CS_LOW; 
     ad7193_set_register_value(AD7193_REG_MODE, newRegValue, 3, 0); //将新值重新写入寄存器
     ad7193_wait_ready_go_low();//等待完成
     PMOD1_CS_HIGH;
+
 }
 
 /***************************************************************************//**
@@ -265,8 +276,10 @@ void ad7193_range_setup(unsigned char polarity, unsigned char range)
 {
     unsigned int oldRegValue = 0x0;
     unsigned int newRegValue = 0x0;
-    
+
+	
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 1);//先读取配置寄存器的值
+	  temp_nRegValue =oldRegValue;	
     oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
 	
     newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
@@ -314,7 +327,7 @@ unsigned int ad7193_single_conversion(void)
 
     PMOD1_CS_LOW;
     ad7193_set_register_value(AD7193_REG_MODE, command, 3, 0); // CS is not modified.
-    ad7193_wait_ready_go_low();//等待数据完成
+    ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
     regData = ad7193_get_register_value(AD7193_REG_DATA, 3, 0);
     PMOD1_CS_HIGH;
     
@@ -369,15 +382,14 @@ unsigned int ad7193_continuous_readavg(unsigned char sampleNumber)
 	    //配置连续转换/使用内部晶振/滤波器输出数据速率
 			command = AD7193_MODE_SEL(AD7193_MODE_CONT)|\
                       AD7193_MODE_CLKSRC(AD7193_CLK_INT)|\
-                      AD7193_MODE_RATE(0x060); 
+                      AD7193_MODE_RATE(0x060)|AD7193_MODE_DAT_STA; 
 	  #endif
 	
     PMOD1_CS_LOW;
-	//配置模式寄存器数据
-    ad7193_set_register_value(AD7193_REG_MODE, command, 3, 0); //
+    ad7193_set_register_value(AD7193_REG_MODE, command, 3, 0); //配置模式寄存器数据
     for(count = 0; count < sampleNumber; count++)
     {
-        ad7193_wait_ready_go_low();//等待完成
+        ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
         samplesAverage += ad7193_get_register_value(AD7193_REG_DATA, 3, 0); //获取数据寄存器的数据 
     }
     PMOD1_CS_HIGH;
@@ -426,7 +438,7 @@ float ad7193_temperature_read(unsigned int dataReg)
     单点校准之后，内部温度传感器的精度典型值为±2℃。
  */  
     dataReg -=0x800000;
-    temperature = (float)dataReg / 2815.0;    // 开氏温度
+    temperature = (float)dataReg / 2815;    // 开氏温度
     temperature -= 273;  // 摄氏温度
     
     return temperature;

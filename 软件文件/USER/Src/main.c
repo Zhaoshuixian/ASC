@@ -8,7 +8,7 @@
 	Author By:   ZhaoShuixian
 
   Brief：
-  1. 实现多任务调度功能，调度最大速率1ms
+  1. 实现多任务调度功能
   2. 实现LED功能
   3. 实现按键功能
   4. 实现串口USART1打印功能
@@ -138,6 +138,7 @@ void device_led_contrl(void)
   }
 }
 
+unsigned int status_reg_val=0;
 /*
 **AD7193相关数据读取
 */
@@ -145,8 +146,6 @@ void device_ad7193_read(void)
 {
 	static  float prv_chip_temperature;
 	static  float prv_ch_volt[4];	
-
-
 /*
 如果使能多个通道，则每次切换通道时，ADC会给滤波器留出完整的建立时间，以便产生有效转换结果。
 AD7193将通过以下序列自动处理这种状况：
@@ -158,39 +157,42 @@ AD7193将通过以下序列自动处理这种状况：
 5. 当ADC在下一个通道上执行转换时，用户可以读取数据寄存器。
 
 */
-  //  unsigned short int status_reg_val=0;
-  //  status_reg_val=ad7193_get_register_value(AD7193_REG_STAT,3,1);//读状态寄存器
-   
-  //  switch(status_reg_val&0x00FF)//当前数据所在通道的指示
-  //  {
-  //     case AD7193_CH_0:
-  //     printf("CH0...\r\n");
-  //     break;
-  //     case AD7193_CH_1:
-  //     printf("CH1...\r\n");      
-  //     break;
-  //     case AD7193_CH_2:
-  //     printf("CH2...\r\n");     
-  //     break;
-  //     case AD7193_CH_3:
-  //      printf("CH3...\r\n");
-  //     break;      
-  //  }
-
 #if 1	
-  ch_raw_avg_data[0] = ad7193_continuous_readavg(10);//连续转换
-  ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);	
+  // ch_raw_avg_data[0] = ad7193_continuous_readavg(10);//连续转换
+  // ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);	
 
-  ch_raw_avg_data[1] = ad7193_continuous_readavg(10);	
-  ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);	
+  // ch_raw_avg_data[1] = ad7193_continuous_readavg(10);	
+  // ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);	
 
-  ch_raw_avg_data[2] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-  ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);/*Converts 24-bit raw data to volts. */	
+  // ch_raw_avg_data[2] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
+  // ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);/*Converts 24-bit raw data to volts. */	
 
-  ch_raw_avg_data[3] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-  ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);	 /*Converts 24-bit raw data to volts. */
+  // ch_raw_avg_data[3] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
+  // ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);	 /*Converts 24-bit raw data to volts. */
 
-  ch_raw_avg_data[4] = ad7193_continuous_readavg(10);
+//   status_reg_val=ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
+//   status_reg_val&=0x0F;    
+//    
+//   switch(status_reg_val)//当前数据所在通道的指示
+//   {
+//      case AD7193_CH_0:
+//      printf("CH0...\r\n");
+//      break;
+//      case AD7193_CH_1:
+//      printf("CH1...\r\n");      
+//      break;
+//      case AD7193_CH_2:
+//      printf("CH2...\r\n");     
+//      break;
+//      case AD7193_CH_3:
+//       printf("CH3...\r\n");
+//      break;   
+//      case AD7193_CH_TEMP:
+//       printf("CHTEMP...\r\n");
+//      break;        
+//   }	
+	status_reg_val = ad7193_get_register_value(AD7193_REG_MODE, 3, 1);//读取模式寄存器数据
+  ch_raw_avg_data[4] = ad7193_continuous_readavg(10);//连续转换
   chip_temperature = ad7193_temperature_read(ch_raw_avg_data[4]);	/* Read the temperature. */	
 
 #ifdef DEBUG_MODE
@@ -205,10 +207,11 @@ AD7193将通过以下序列自动处理这种状况：
   if(prv_chip_temperature != chip_temperature)
   {
      prv_chip_temperature = chip_temperature;
-     printf("Current Chip temperature is %f.C...\r\n",prv_chip_temperature);
-  }
+     printf("Current Chip temperature is %fC...\r\n",prv_chip_temperature);
+  }   
 #endif
 #else 
+	
 typedef enum
 {
   CH0_SEL=0,
@@ -225,6 +228,8 @@ typedef enum
 
 static ch_status ch_transfer_status;//通道转移状态
 
+
+	
 switch(ch_transfer_status)
 {
   case CH0_SEL://通道选择
@@ -341,7 +346,6 @@ void device_temper_read(void)
 int main(void)
 {
   HAL_Init();
-	
 	__TODO:	
   SystemClock_Config();
   MX_GPIO_Init();
@@ -388,30 +392,34 @@ int main(void)
   ad7193_reset(); //// Resets the device.
 	HAL_Delay(1);	// >500us 
 	//通道零点和量程进行预校准
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
 
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
 
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2); 
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2); 
 
-  ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
-  ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+	
+//   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_TEMP);
+  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_TEMP); 
+
 	//温度是双极性配置 
+	ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道
   ad7193_range_setup(0, AD7193_CONF_GAIN_1);/* Select Bipolar operation and ADC's input range to +-2.5V. */
 	#if 1
-  ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
-  ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
-  ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
-  ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
-  ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道
-
-//	chip_temperature =ad7193_temperature_read1();
-//	printf("Current Chip temperature is %fC...\r\n",chip_temperature);	
+  // ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
+  // ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
+  // ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
+  // ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
+ // ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道
+//	chip_temperature=ad7193_temperature_read1();
+//	printf("Current Chip temperature is %fC...\r\n",chip_temperature);
 	#endif
-  //ad7193_bpdsw_set(1);
+  // ad7193_bpdsw_set(1);
 	#ifdef DEBUG_MODE
   printf("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
   printf("\r\n------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);

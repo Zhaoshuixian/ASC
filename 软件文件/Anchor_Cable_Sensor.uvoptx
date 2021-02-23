@@ -173,7 +173,12 @@
         <Ww>
           <count>4</count>
           <WinNumber>1</WinNumber>
-          <ItemText>dataReg,0x10</ItemText>
+          <ItemText>status_reg_val,0x10</ItemText>
+        </Ww>
+        <Ww>
+          <count>5</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>temp_nRegValue</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
