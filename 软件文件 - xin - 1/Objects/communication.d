@@ -1,0 +1,12 @@
+.\objects\communication.o: DRIVER\Communication.c
+.\objects\communication.o: DRIVER\Communication.h
+.\objects\communication.o: D:\ARM\PACK\Keil\STM32L4xx_DFP\2.1.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_ll_spi.h
+.\objects\communication.o: D:\ARM\PACK\Keil\STM32L4xx_DFP\2.1.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include\stm32l4xx.h
+.\objects\communication.o: D:\ARM\PACK\Keil\STM32L4xx_DFP\2.1.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include\stm32l432xx.h
+.\objects\communication.o: D:\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cm4.h
+.\objects\communication.o: D:\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\communication.o: D:\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cmInstr.h
+.\objects\communication.o: D:\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\cmsis_armcc.h
+.\objects\communication.o: D:\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cmFunc.h
+.\objects\communication.o: D:\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cmSimd.h
+.\objects\communication.o: D:\ARM\PACK\Keil\STM32L4xx_DFP\2.1.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include\system_stm32l4xx.h

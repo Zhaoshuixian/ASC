@@ -4,33 +4,43 @@
 #include "comm.h"
 
 extern I2C_HandleTypeDef hi2c1;
-
-//传感器读操作
+struct bmi160_dev sensor_bmi160;
+//IIC读操作
 signed char bmi160_rd(unsigned char dev_addr, unsigned char reg_addr, unsigned char *data, unsigned short int len)
 {
-
+	if(0==data || 0==len)
+	{
+		return -1;
+	}
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,0xFFFF);//1.发起读操作 ,写目标寄存器命令
-	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,0xFFFF);    //2.接收目标寄存器值数据
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,2000);//1.发起读操作 ,写目标寄存器命令
+	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,2000);    //2.接收目标寄存器值数据
 	
 	return 0;	
 }
 
-//传感器写操作
+//IIC写操作
 signed char bmi160_wr(unsigned char dev_addr, unsigned char reg_addr, unsigned char *data, unsigned short int len)
 {
 	#define MAX_TX_SIZE (64) //设置最大传输字节数
 	
-	unsigned char tx_msg[MAX_TX_SIZE]={reg_addr};
+	unsigned char tx_msg[MAX_TX_SIZE]={0};
 	
-	if(MAX_TX_SIZE<len)//传输数据长度超过缓存长度
+	memset(tx_msg,0,MAX_TX_SIZE);
+	
+	if(0==data || 0==len)
+	{
+		return -1;
+	}	
+
+	if(MAX_TX_SIZE<len+1)//传输数据长度超过缓存长度
 	{
 		return -1;
 	}
 	tx_msg[0]=reg_addr;
 	memcpy(&tx_msg[1],data,len);//合并数据至MSG缓存区,按照一帧格式传输
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&tx_msg[0],len+1,0xFFFF);   //寄存器地址和数据连续写入
+	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&tx_msg[0],len+1,2000);   //寄存器地址和数据连续写入
 
 	return 0;
 }
@@ -66,7 +76,7 @@ unsigned char bmi160_bsp_init(struct bmi160_dev *me)
 	int8_t rslt = BMI160_OK;
 	
 	rslt = bmi160_init(me);        //初始化配置
-
+ 
 	return rslt;
 }
 
@@ -103,8 +113,10 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 
 		/* To read only Accel data */
 		rslt = bmi160_get_sensor_data(BMI160_ACCEL_SEL, &accel, NULL, me);
+	  printf("Accel data is %d...\r\n",rslt);
 		/* To read only Gyro data */
 		rslt = bmi160_get_sensor_data(BMI160_GYRO_SEL, NULL, &gyro, me);
+	  printf("Gyro data is %d...\r\n",rslt);	
 		/* To read both Accel and Gyro data */
 		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL), &accel, &gyro, me);
 		/* To read Accel data along with time */
@@ -308,5 +320,8 @@ unsigned char bmi160_user_space(struct bmi160_dev *me)
 //if (interrupt.bit.step)  printf("Step detector interrupt occured\n");
 //```
 
-
+void bmi160_config_init(void)
+{
+	bmi160_config_accel_gyro_sensors_in_normal_mode(&sensor_bmi160);
+}
 

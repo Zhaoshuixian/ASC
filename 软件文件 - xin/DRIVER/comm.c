@@ -103,9 +103,10 @@ unsigned char SPI_Init(unsigned char lsbFirst,unsigned long clockFreq,unsigned c
 *******************************************************************************/
 unsigned char SPI_Read(unsigned char slaveDeviceId,unsigned char* data,unsigned char bytesNumber)
 {
+	unsigned char s=0x01;
+  HAL_SPI_Transmit(&hspi3,&s,1,1000);
+  HAL_SPI_Receive(&hspi3,data,bytesNumber,1000);
 
-  HAL_SPI_Receive(&hspi3,data,bytesNumber,0xFFFF);
-	
 	return bytesNumber;	
 }
 
@@ -122,8 +123,9 @@ unsigned char SPI_Read(unsigned char slaveDeviceId,unsigned char* data,unsigned 
 *******************************************************************************/
 unsigned char SPI_Write(unsigned char slaveDeviceId,unsigned char* data,unsigned char bytesNumber)
 {
-
-  HAL_SPI_Transmit(&hspi3,data,bytesNumber,0xFFFF);
+	unsigned char s=0x01;
+  HAL_SPI_Transmit(&hspi3,&s,1,1000);
+  HAL_SPI_Transmit(&hspi3,data,bytesNumber,1000);
 	
 	return bytesNumber;
 }

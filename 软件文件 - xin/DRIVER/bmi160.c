@@ -1320,12 +1320,13 @@ static int8_t map_feature_interrupt(const struct bmi160_int_settg *int_config, c
  * @brief This API reads the data from the given register address
  * of sensor.
  */
+ uint8_t monitor_data[10]={0};
  int8_t bmi160_get_regs(uint8_t reg_addr, uint8_t *data, uint16_t len, const struct bmi160_dev *dev)
 {
     int8_t rslt = BMI160_OK;
 
     /* Variable to define temporary length */
-    uint16_t temp_len = len + dev->dummy_byte;
+    uint16_t temp_len = len + dev->dummy_byte;/*!dummy_byte For switching from I2C to SPI */
 
     /* Variable to define temporary buffer */
     uint8_t temp_buf[temp_len];
@@ -1345,11 +1346,12 @@ static int8_t map_feature_interrupt(const struct bmi160_int_settg *int_config, c
     else
     {
         /* Configuring reg_addr for SPI Interface */
-        if (dev->interface == BMI160_SPI_INTF)
+        if (dev->interface == BMI160_SPI_INTF)//对于SPI接口
         {
             reg_addr = (reg_addr | BMI160_SPI_RD_MASK);
         }
-        rslt = dev->read(dev->id, reg_addr, temp_buf, temp_len);
+				
+        rslt = dev->read(dev->id, reg_addr, temp_buf, temp_len);//IIC BUS读
 
         if (rslt == BMI160_OK)
         {
@@ -1360,12 +1362,12 @@ static int8_t map_feature_interrupt(const struct bmi160_int_settg *int_config, c
                 indx++;
             }
         }
-        else
+        else	
         {
             rslt = BMI160_E_COM_FAIL;
         }
     }
-
+    memcpy(monitor_data,data,len);
     return rslt;
 }
 
@@ -1397,7 +1399,7 @@ int8_t bmi160_set_regs(uint8_t reg_addr, uint8_t *data, uint16_t len, const stru
         if ((dev->prev_accel_cfg.power == BMI160_ACCEL_NORMAL_MODE) ||
             (dev->prev_gyro_cfg.power == BMI160_GYRO_NORMAL_MODE))
         {
-            rslt = dev->write(dev->id, reg_addr, data, len);
+            rslt = dev->write(dev->id, reg_addr, data, len);//IIC BUS写
             /* Kindly refer bmi160 data sheet section 3.2.4 */
             dev->delay_ms(1);// I2C Access Restriction After Writting Operation > 2us/450us
         }
@@ -1431,7 +1433,7 @@ int8_t bmi160_init(struct bmi160_dev *dev)
 {
     int8_t rslt;
     uint8_t data;
-    uint8_t try = 3;
+    uint8_t try_cont = 3;
 
     /* Null-pointer check */
     rslt = null_ptr_check(dev);
@@ -1447,10 +1449,10 @@ int8_t bmi160_init(struct bmi160_dev *dev)
     {
         /* Assign chip id as zero */
         dev->chip_id = 0;
-        while ((try--) && (dev->chip_id != BMI160_CHIP_ID))//3次探测
+        while ((try_cont--) && (dev->chip_id != BMI160_CHIP_ID))//3次探测
         {
             /* Read chip_id */
-            rslt = bmi160_get_regs(BMI160_CHIP_ID_ADDR, &dev->chip_id, 1, dev);//读取器件ID
+            rslt = bmi160_get_regs(BMI160_CHIP_ID_ADDR, &dev->chip_id, 1, dev);//读取器件ID号(0xD1)
         }
         if ((rslt == BMI160_OK) && (dev->chip_id == BMI160_CHIP_ID))
         {

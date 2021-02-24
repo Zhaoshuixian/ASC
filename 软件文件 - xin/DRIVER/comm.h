@@ -3,7 +3,7 @@
 #define _COMM_H_
 
 #include "stm32l4xx_hal.h"
-
+#include "stdio.h"
 
 /*! Initializes the I2C communication peripheral. */
 unsigned char I2C_Init(unsigned long clockFreq);
