@@ -27,7 +27,14 @@ Project File Date:  02/24/2021
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'ACS'
-".\Objects\Anchor_Cable_Sensor.axf" - 0 Error(s), 0 Warning(s).
+compiling bmi160_bsp.c...
+DRIVER\bmi160_bsp.c(205): warning:  #177-D: variable "rslt"  was declared but never referenced
+  	int8_t rslt = BMI160_OK;
+DRIVER\bmi160_bsp.c: 1 warning, 0 errors
+linking...
+Program Size: Code=24140 RO-data=500 RW-data=80 ZI-data=2224  
+FromELF: creating hex file...
+".\Objects\Anchor_Cable_Sensor.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -134,7 +141,7 @@ Package Vendor: Keil
       Source file:   Drivers\CMSIS\Device\ST\STM32L4xx\Source\Templates\arm\startup_stm32l432xx.s
       Include file:  Drivers\CMSIS\Device\ST\STM32L4xx\Include\stm32l4xx.h
       Source file:   Drivers\CMSIS\Device\ST\STM32L4xx\Source\Templates\system_stm32l4xx.c
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>

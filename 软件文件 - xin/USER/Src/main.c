@@ -12,7 +12,8 @@
   2. 实现LED功能
   3. 实现按键功能
   4. 实现串口USART1打印功能
-  5. 
+  5. 实现AD7193数据读取
+  6. 实现BMI160数据读取
 
 */
 
@@ -317,7 +318,7 @@ int main(void)
       //1.2 -- BMI160 TASK--	
       tasks_create(device_bmi160_read,BMI160_TASK_TIME, 2);
       //1.3 -- AD7193 TASK--
-      tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
+     // tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
       //1.4 -- KEY_BUTTON TASK--	
       tasks_create(device_key_read,   KEY_TASK_TIME,    4);//OK    
       //1.5 -- EXT TEMPER_SENSOR TASK--

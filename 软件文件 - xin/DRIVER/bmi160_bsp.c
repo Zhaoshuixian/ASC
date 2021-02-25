@@ -113,13 +113,13 @@ unsigned char bmi160_config_accel_gyro_sensors_in_normal_mode(struct bmi160_dev 
 
 		/* Select the Output data rate, range of accelerometer sensor */
 		me->accel_cfg.odr   = BMI160_ACCEL_ODR_1600HZ;
-		me->accel_cfg.range = BMI160_ACCEL_RANGE_2G;
+		me->accel_cfg.range = BMI160_ACCEL_RANGE_2G; //2g
 		me->accel_cfg.bw    = BMI160_ACCEL_BW_NORMAL_AVG4;
 		/* Select the power mode of accelerometer sensor */
 		me->accel_cfg.power = BMI160_ACCEL_NORMAL_MODE; //0x7E -> 0x11
 		/* Select the Output data rate, range of Gyroscope sensor */
 		me->gyro_cfg.odr    = BMI160_GYRO_ODR_3200HZ;
-		me->gyro_cfg.range  = BMI160_GYRO_RANGE_2000_DPS;
+		me->gyro_cfg.range  = BMI160_GYRO_RANGE_2000_DPS;//2000dps
 		me->gyro_cfg.bw     = BMI160_GYRO_BW_NORMAL_MODE;
 		/* Select the power mode of Gyroscope sensor */
 		me->gyro_cfg.power  = BMI160_GYRO_NORMAL_MODE;  //0x7E -> 0x15
@@ -129,34 +129,148 @@ unsigned char bmi160_config_accel_gyro_sensors_in_normal_mode(struct bmi160_dev 
 	  return rslt;	
 }
 
+/*
+***中值滤波算法
+*/
+
+unsigned int midval_filter(unsigned int *sample_buff,unsigned char sample_num) 
+{
+	unsigned int temp;
+
+	for(unsigned char j=0;j<sample_num-1;j++) 
+	{
+	  for (unsigned char i=0;i<sample_num-j;i++) 
+	  { 
+			if ( sample_buff[i]>sample_buff[i+1] )
+			{ 
+				temp = sample_buff[i]; 
+				sample_buff[i] = sample_buff[i+1]; //相邻数据相互交换 
+				sample_buff[i+1] = temp; //（把 N 次采样值按大小排列，最后数据依次从小到大排列）
+			} 
+		}
+	} 
+	return sample_buff[(sample_num-1)/2];//取中间值为本次有效值 
+}
+
+/*
+***均值算法
+*/
+unsigned int avg_filter(unsigned int *sample_buff,unsigned char sample_num) 
+{ 
+	unsigned int sum = 0; 
+	
+	for (unsigned char i=0;i<sample_num;i++) 
+	{ 
+		sum += sample_buff[i];
+	}
+	return (sum/sample_num);//先求其和，再求其平均 
+}
+
+/*
+***加速度数据转换
+*/
+unsigned int accel_data_convert(unsigned int raw_data)
+{
+	
+	if(raw_data>0x7FFF)
+	{
+	  raw_data = -(0xFFFF-raw_data);
+	}
+	
+	raw_data = (raw_data*9.8)/(0x8000/2);//当量程为±2g时，转换为g/s的加速度换算公式(9.8)
+	
+	return  raw_data;
+}
+
+/*
+***陀螺仪数据转换
+*/
+unsigned int gyro_data_convert(unsigned int raw_data)
+{
+	if(raw_data>0x7FFF)
+	{
+			raw_data = -(0xFFFF-raw_data);
+	}
+	
+	raw_data = (raw_data*2000)/0x7FFF;// range为2000dps时，转换为角速度°/s的公式	
+	
+	return raw_data;
+}
+
 //读取传感器数据
 void bmi160_read_sensor_data(struct bmi160_dev *me)
 {
-		int8_t rslt = BMI160_OK;
+	#define N (21) //连续采样 N 次（N 取奇数）
 	
-		struct bmi160_sensor_data accel;
-		struct bmi160_sensor_data gyro;
+	int8_t rslt = BMI160_OK;
+	
+	unsigned  int accel_xsample_buff[N];
+	unsigned  int accel_ysample_buff[N];
+	unsigned  int accel_zsample_buff[N];
+	
+	unsigned  int gyro_xsample_buff[N];	
+	unsigned  int gyro_ysample_buff[N];
+	unsigned  int gyro_zsample_buff[N];	
+	
+	struct bmi160_sensor_data accel;
+	struct bmi160_sensor_data gyro;
 
-//		/* To read only Accel data */
-//		rslt = bmi160_get_sensor_data(BMI160_ACCEL_SEL, &accel, NULL, me);
-//	  printf("Accel data is %d...\r\n",rslt);
-//		/* To read only Gyro data */
-//		rslt = bmi160_get_sensor_data(BMI160_GYRO_SEL, NULL, &gyro, me);
-//	  printf("Gyro data is %d...\r\n",rslt);	
-//		/* To read both Accel and Gyro data */
-//		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL), &accel, &gyro, me);
+#if DEBIG_MODE
+	/* To read only Accel data */
+	rslt = bmi160_get_sensor_data(BMI160_ACCEL_SEL, &accel, NULL, me);
+	printf("Accel data is %d...\r\n",rslt);
+	/* To read only Gyro data */
+	rslt = bmi160_get_sensor_data(BMI160_GYRO_SEL, NULL, &gyro, me);
+	printf("Gyro data is %d...\r\n",rslt);	
+	/* To read both Accel and Gyro data */
+	bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL), &accel, &gyro, me);
+	/* To read Accel data along with time */
+	rslt = bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_TIME_SEL) , &accel, NULL, me);
 
-//	
-//		/* To read Accel data along with time */
-//		rslt = bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_TIME_SEL) , &accel, NULL, me);
-//	
-//		/* To read Gyro data along with time */
-//		rslt = bmi160_get_sensor_data((BMI160_GYRO_SEL | BMI160_TIME_SEL), NULL, &gyro, me);
-		
+	/* To read Gyro data along with time */
+	rslt = bmi160_get_sensor_data((BMI160_GYRO_SEL | BMI160_TIME_SEL), NULL, &gyro, me);
+#endif		
+  for(unsigned char i= 0;i< N;i++)//连续读取
+	{
 		/* To read both Accel and Gyro data along with time*///同时读取
 		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL | BMI160_TIME_SEL), &accel, &gyro, me);	
-		printf("Accel data is x=%d,y=%d,z=%d...\r\n",accel.x,accel.y,accel.z);	
-		printf("Gyro data is x=%d,y=%d,z=%d...\r\n",gyro.x,gyro.y,gyro.z);			
+		
+		accel_xsample_buff[i] = accel.x;
+		accel_ysample_buff[i] = accel.y;	
+		accel_zsample_buff[i] = accel.z;	
+		
+    gyro_xsample_buff[i] = gyro.x;
+    gyro_ysample_buff[i] = gyro.y;
+    gyro_zsample_buff[i] = gyro.z;		
+	}
+#if 0	
+	avg_filter(accel_xsample_buff,N) ;//经过滤波
+	avg_filter(accel_ysample_buff,N) ;//经过滤波
+	avg_filter(accel_zsample_buff,N) ;//经过滤波
+	
+	avg_filter(gyro_xsample_buff,N) ;//经过滤波
+	avg_filter(gyro_ysample_buff,N) ;//经过滤波
+	avg_filter(gyro_zsample_buff,N) ;//经过滤波	
+#else
+	accel.x = midval_filter(accel_xsample_buff,N) ;//经过滤波
+	accel.y = midval_filter(accel_ysample_buff,N) ;//经过滤波
+	accel.z = midval_filter(accel_zsample_buff,N) ;//经过滤波
+
+	gyro.x = midval_filter(gyro_xsample_buff,N) ;//经过滤波
+	gyro.y = midval_filter(gyro_ysample_buff,N) ;//经过滤波
+	gyro.z = midval_filter(gyro_zsample_buff,N) ;//经过滤波
+#endif
+
+	accel.x =(float)accel_data_convert(accel.x);
+	accel.y =(float)accel_data_convert(accel.y);
+	accel.z =(float)accel_data_convert(accel.z);
+	
+	gyro.x =(float)gyro_data_convert(gyro.x);
+	gyro.y =(float)gyro_data_convert(gyro.y);
+	gyro.z =(float)gyro_data_convert(gyro.z);
+	
+	printf("Accel data is x=%d,y=%d,z=%d...\r\n",accel.x,accel.y,accel.z);	
+	printf("Gyro data is x=%d,y=%d,z=%d...\r\n",gyro.x,gyro.y,gyro.z);			
 }
 
 //设置传感器电源模式
