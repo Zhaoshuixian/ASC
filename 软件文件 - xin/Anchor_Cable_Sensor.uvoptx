@@ -148,24 +148,7 @@
           <Name>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32L4xx_128 -FS08000000 -FL020000 -FP0($$Device:STM32L432KBUx$CMSIS\Flash\STM32L4xx_128.FLM))</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint>
-        <Bp>
-          <Number>0</Number>
-          <Type>0</Type>
-          <LineNumber>1228</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134221154</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Anchor_Cable_Sensor\D:/Users/Tek_Eng/AppData/Local/Arm/Packs/Keil/STM32L4xx_DFP/2.5.0/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_i2c.c\1228</Expression>
-        </Bp>
-      </Breakpoint>
+      <Breakpoint/>
       <WatchWindow1>
         <Ww>
           <count>0</count>

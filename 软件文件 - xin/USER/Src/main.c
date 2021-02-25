@@ -266,11 +266,11 @@ int main(void)
 	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 	{
 		  printf(">> BMI160 Init failed...\r\n");
-//			while(1)
-//			{
-//				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-//				HAL_Delay(150);//LED闪烁指示
-//			}
+			while(1)
+			{
+				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+				HAL_Delay(150);//LED闪烁指示
+			}
 	}	
   printf(">> BMI160 Chip ID is %#X...\r\n",sensor_bmi160.chip_id);
 	bmi160_config_init();
@@ -319,7 +319,7 @@ int main(void)
       //1.3 -- AD7193 TASK--
       tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
       //1.4 -- KEY_BUTTON TASK--	
-      //tasks_create(device_key_read,   KEY_TASK_TIME,    4);//OK    
+      tasks_create(device_key_read,   KEY_TASK_TIME,    4);//OK    
       //1.5 -- EXT TEMPER_SENSOR TASK--
       //tasks_create(device_temper_read,TEMPER_TASK_TIME, 5);    
       //1.6 -- EXT_TRIG_SINGAL TASK--
@@ -544,7 +544,7 @@ void SystemClock_Config(void)
   */
 static void MX_I2C1_Init(void)
 {
-  hi2c1.Instance              = I2C1;
+  hi2c1.Instance              = I2C1;	
   hi2c1.Init.Timing           = 0x10D05E82;
   hi2c1.Init.OwnAddress1      = 0x0; //设置I2C从机地址
   hi2c1.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;//7位地址模式
@@ -553,7 +553,7 @@ static void MX_I2C1_Init(void)
   hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
   hi2c1.Init.GeneralCallMode  = I2C_GENERALCALL_DISABLE;
   hi2c1.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;
-  hi2c1.Mode = HAL_I2C_MODE_MASTER;
+
 	//配置初始化
   if (HAL_I2C_Init(&hi2c1) != HAL_OK) Error_Handler();
   //模拟滤波配置

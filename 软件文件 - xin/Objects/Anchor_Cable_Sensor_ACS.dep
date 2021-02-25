@@ -1,19 +1,19 @@
 Dependencies for Project 'Anchor_Cable_Sensor', Target 'ACS': (DO NOT MODIFY !)
 CompilerVersion: 5060960::V5.06 update 7 (build 960)::.\ARMCC
-F (.\DRIVER\bmi160.c)(0x60363DBF)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\bmi160.o --omf_browse .\objects\bmi160.crf --depend .\objects\bmi160.d)
+F (.\DRIVER\bmi160.c)(0x60371A3D)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\bmi160.o --omf_browse .\objects\bmi160.crf --depend .\objects\bmi160.d)
 I (.\RTE\_ACS\Pre_Include_Global.h)(0x600E3215)
 I (DRIVER\bmi160.h)(0x6007B000)
-I (DRIVER\bmi160_defs.h)(0x6007CC43)
+I (DRIVER\bmi160_defs.h)(0x603718CF)
 I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\math.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E2EB2)
-F (.\DRIVER\bmi160_bsp.c)(0x60363E67)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\bmi160_bsp.o --omf_browse .\objects\bmi160_bsp.crf --depend .\objects\bmi160_bsp.d)
+F (.\DRIVER\bmi160_bsp.c)(0x603727C1)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\bmi160_bsp.o --omf_browse .\objects\bmi160_bsp.crf --depend .\objects\bmi160_bsp.d)
 I (.\RTE\_ACS\Pre_Include_Global.h)(0x600E3215)
 I (DRIVER\bmi160_bsp.h)(0x603617A2)
 I (DRIVER\bmi160.h)(0x6007B000)
-I (DRIVER\bmi160_defs.h)(0x6007CC43)
+I (DRIVER\bmi160_defs.h)(0x603718CF)
 I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\math.h)(0x5E8E2EB2)
@@ -167,7 +167,7 @@ I (D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM
 I (D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_uart.h)(0x5F72C3E6)
 I (D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_uart_ex.h)(0x5F72C3E6)
 I (.\USER\Inc\main.h)(0x601FA5BD)
-F (.\USER\Src\main.c)(0x603642A2)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
+F (.\USER\Src\main.c)(0x603719D4)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
 I (.\RTE\_ACS\Pre_Include_Global.h)(0x600E3215)
 I (.\USER\Inc\main.h)(0x601FA5BD)
 I (D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal.h)(0x5F72C3E6)
@@ -210,11 +210,11 @@ I (D:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E2EB2)
 I (D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_ll_gpio.h)(0x5F72C3E6)
 I (.\DRIVER\bmi160_bsp.h)(0x603617A2)
 I (.\DRIVER\bmi160.h)(0x6007B000)
-I (.\DRIVER\bmi160_defs.h)(0x6007CC43)
+I (.\DRIVER\bmi160_defs.h)(0x603718CF)
 I (D:\Keil_v5\ARM\ARMCC\include\math.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E2EB2)
 I (D:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E2EB2)
-F (.\USER\Src\stm32l4xx_hal_msp.c)(0x60362097)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\stm32l4xx_hal_msp.o --omf_browse .\objects\stm32l4xx_hal_msp.crf --depend .\objects\stm32l4xx_hal_msp.d)
+F (.\USER\Src\stm32l4xx_hal_msp.c)(0x603706FD)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I .\DRIVER -I .\CMSIS -I .\USER\Inc -I .\IIC-I.\RTE\_ACS-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\ARM\CMSIS\5.7.0\CMSIS\Core\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc-ID:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy-D__UVISION_VERSION="533" -D_RTE_ -DSTM32L432xx -D_RTE_ -DSTM32L432xx  --preinclude="Pre_Include_Global.h"-o .\objects\stm32l4xx_hal_msp.o --omf_browse .\objects\stm32l4xx_hal_msp.crf --depend .\objects\stm32l4xx_hal_msp.d)
 I (.\RTE\_ACS\Pre_Include_Global.h)(0x600E3215)
 I (.\USER\Inc\main.h)(0x601FA5BD)
 I (D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal.h)(0x5F72C3E6)

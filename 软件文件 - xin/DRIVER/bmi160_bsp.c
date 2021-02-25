@@ -12,21 +12,35 @@ signed char bmi160_rd(unsigned char dev_addr, unsigned char reg_addr, unsigned c
 	{
 		return -1;
 	}
+	#if 0
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,2000);//1.发起读操作 ,写目标寄存器命令
-	HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,2000);    //2.接收目标寄存器值数据
-	
-	return 0;	
+	if(HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&reg_addr,1,2000)== HAL_OK )//1.发起读操作 ,写目标寄存器命令
+	{
+		if(HAL_I2C_Master_Receive(&hi2c1,dev_addr,data,len,2000)== HAL_OK)   //2.接收目标寄存器值数据
+		{
+			return 0;
+		}
+	}
+	return -1;
+  #else
+	if( HAL_I2C_Mem_Read(&hi2c1,dev_addr,reg_addr,I2C_MEMADD_SIZE_8BIT,data,len,1000) == HAL_OK )
+	{
+			return 0;
+	}
+	else
+	{
+		return -1;
+	}
+	#endif
 }
 
 //IIC写操作
 signed char bmi160_wr(unsigned char dev_addr, unsigned char reg_addr, unsigned char *data, unsigned short int len)
 {
+	#if 0	
 	#define MAX_TX_SIZE (64) //设置最大传输字节数
 	
 	unsigned char tx_msg[MAX_TX_SIZE]={0};
-	
-	memset(tx_msg,0,MAX_TX_SIZE);
 	
 	if(0==data || 0==len)
 	{
@@ -40,9 +54,21 @@ signed char bmi160_wr(unsigned char dev_addr, unsigned char reg_addr, unsigned c
 	tx_msg[0]=reg_addr;
 	memcpy(&tx_msg[1],data,len);//合并数据至MSG缓存区,按照一帧格式传输
 	//数据帧结构操作(阻塞函数)
-	HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&tx_msg[0],len+1,2000);   //寄存器地址和数据连续写入
-
-	return 0;
+	if(HAL_I2C_Master_Transmit(&hi2c1,dev_addr,&tx_msg[0],len+1,2000)== HAL_OK )   //寄存器地址和数据连续写入
+	{
+			return 0;
+	}
+	return -1;
+	#else
+	if(HAL_I2C_Mem_Write(&hi2c1,dev_addr,reg_addr,I2C_MEMADD_SIZE_8BIT,data,len,1000) == HAL_OK )
+	{
+			return 0;
+	}
+	else
+	{
+		return -1;
+	}
+	#endif
 }
 
 /*
@@ -90,13 +116,13 @@ unsigned char bmi160_config_accel_gyro_sensors_in_normal_mode(struct bmi160_dev 
 		me->accel_cfg.range = BMI160_ACCEL_RANGE_2G;
 		me->accel_cfg.bw    = BMI160_ACCEL_BW_NORMAL_AVG4;
 		/* Select the power mode of accelerometer sensor */
-		me->accel_cfg.power = BMI160_ACCEL_NORMAL_MODE;
+		me->accel_cfg.power = BMI160_ACCEL_NORMAL_MODE; //0x7E -> 0x11
 		/* Select the Output data rate, range of Gyroscope sensor */
 		me->gyro_cfg.odr    = BMI160_GYRO_ODR_3200HZ;
 		me->gyro_cfg.range  = BMI160_GYRO_RANGE_2000_DPS;
 		me->gyro_cfg.bw     = BMI160_GYRO_BW_NORMAL_MODE;
 		/* Select the power mode of Gyroscope sensor */
-		me->gyro_cfg.power  = BMI160_GYRO_NORMAL_MODE; 
+		me->gyro_cfg.power  = BMI160_GYRO_NORMAL_MODE;  //0x7E -> 0x15
 		/* Set the sensor configuration */
 		rslt = bmi160_set_sens_conf(me);	
 	
@@ -111,20 +137,26 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 		struct bmi160_sensor_data accel;
 		struct bmi160_sensor_data gyro;
 
-		/* To read only Accel data */
-		rslt = bmi160_get_sensor_data(BMI160_ACCEL_SEL, &accel, NULL, me);
-	  printf("Accel data is %d...\r\n",rslt);
-		/* To read only Gyro data */
-		rslt = bmi160_get_sensor_data(BMI160_GYRO_SEL, NULL, &gyro, me);
-	  printf("Gyro data is %d...\r\n",rslt);	
-		/* To read both Accel and Gyro data */
-		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL), &accel, &gyro, me);
-		/* To read Accel data along with time */
-		rslt = bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_TIME_SEL) , &accel, NULL, me);
-		/* To read Gyro data along with time */
-		rslt = bmi160_get_sensor_data((BMI160_GYRO_SEL | BMI160_TIME_SEL), NULL, &gyro, me);
-		/* To read both Accel and Gyro data along with time*/
+//		/* To read only Accel data */
+//		rslt = bmi160_get_sensor_data(BMI160_ACCEL_SEL, &accel, NULL, me);
+//	  printf("Accel data is %d...\r\n",rslt);
+//		/* To read only Gyro data */
+//		rslt = bmi160_get_sensor_data(BMI160_GYRO_SEL, NULL, &gyro, me);
+//	  printf("Gyro data is %d...\r\n",rslt);	
+//		/* To read both Accel and Gyro data */
+//		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL), &accel, &gyro, me);
+
+//	
+//		/* To read Accel data along with time */
+//		rslt = bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_TIME_SEL) , &accel, NULL, me);
+//	
+//		/* To read Gyro data along with time */
+//		rslt = bmi160_get_sensor_data((BMI160_GYRO_SEL | BMI160_TIME_SEL), NULL, &gyro, me);
+		
+		/* To read both Accel and Gyro data along with time*///同时读取
 		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL | BMI160_TIME_SEL), &accel, &gyro, me);	
+		printf("Accel data is x=%d,y=%d,z=%d...\r\n",accel.x,accel.y,accel.z);	
+		printf("Gyro data is x=%d,y=%d,z=%d...\r\n",gyro.x,gyro.y,gyro.z);			
 }
 
 //设置传感器电源模式
@@ -322,6 +354,9 @@ unsigned char bmi160_user_space(struct bmi160_dev *me)
 
 void bmi160_config_init(void)
 {
-	bmi160_config_accel_gyro_sensors_in_normal_mode(&sensor_bmi160);
+	if(BMI160_OK == bmi160_config_accel_gyro_sensors_in_normal_mode(&sensor_bmi160))
+	{
+		
+	}
 }
 

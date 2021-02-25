@@ -1320,7 +1320,6 @@ static int8_t map_feature_interrupt(const struct bmi160_int_settg *int_config, c
  * @brief This API reads the data from the given register address
  * of sensor.
  */
- uint8_t monitor_data[10]={0};
  int8_t bmi160_get_regs(uint8_t reg_addr, uint8_t *data, uint16_t len, const struct bmi160_dev *dev)
 {
     int8_t rslt = BMI160_OK;
@@ -1367,7 +1366,6 @@ static int8_t map_feature_interrupt(const struct bmi160_int_settg *int_config, c
             rslt = BMI160_E_COM_FAIL;
         }
     }
-    memcpy(monitor_data,data,len);
     return rslt;
 }
 
@@ -1454,7 +1452,7 @@ int8_t bmi160_init(struct bmi160_dev *dev)
             /* Read chip_id */
             rslt = bmi160_get_regs(BMI160_CHIP_ID_ADDR, &dev->chip_id, 1, dev);//读取器件ID号(0xD1)
         }
-        if ((rslt == BMI160_OK) && (dev->chip_id == BMI160_CHIP_ID))
+        if ((rslt == BMI160_OK) && (dev->chip_id == BMI160_CHIP_ID))//ID读取成功
         {
             dev->any_sig_sel = BMI160_BOTH_ANY_SIG_MOTION_DISABLED;
             rslt = bmi160_soft_reset(dev);/* Soft reset */
