@@ -25,7 +25,7 @@
 
 unsigned char currentPolarity = 0;
 unsigned char currentGain     = 1;
-unsigned int temp_nRegValue =0;
+unsigned int tmp_RegValue=0; 
 /***************************************************************************//**
  * @brief Checks if the AD7139 part is present.
  *
@@ -41,12 +41,11 @@ unsigned char ad7193_init(void)
     HAL_Delay(1);//上电自动复位后，延时>=500us
 
     regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取配置寄存器值
-temp_nRegValue =regVal;
+    tmp_RegValue=regVal;
     if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//判断IC是否挂载
 
     return status;
 }
-
 
 /***************************************************************************//**
  * @brief Writes data into a register.
@@ -74,7 +73,7 @@ void ad7193_set_register_value(unsigned char registerAddress,unsigned int regist
         bytesNr --;
     }
     
-	if(modifyCS) PMOD1_CS_LOW; //使能SPI
+	  if(modifyCS) PMOD1_CS_LOW; //使能SPI
 		
     SPI_Write(AD7193_SLAVE_ID * modifyCS, writeCommand, bytesNumber + 1);	
 		
@@ -99,11 +98,8 @@ unsigned int ad7193_get_register_value(unsigned char registerAddress,unsigned ch
     
     registerWord[0] = AD7193_COMM_READ |AD7193_COMM_ADDR(registerAddress);//寄存器地址
 
-  	if(modifyCS) PMOD1_CS_LOW; //使能SPI
-		
-    //ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低		
+  	if(modifyCS) PMOD1_CS_LOW; //使能SPI	
     SPI_Read(AD7193_SLAVE_ID * modifyCS, registerWord, bytesNumber + 1);// registerWord[0]/registerWord[1]
-		
     if(modifyCS) PMOD1_CS_HIGH;	
 
     for(i = 1; i < bytesNumber + 1; i++) 
@@ -139,9 +135,9 @@ void ad7193_reset(void)
     registerWord[3] = 0xFF;
     registerWord[4] = 0xFF;
     registerWord[5] = 0xFF;
-    registerWord[6] = 0xFF;		
+	
     PMOD1_CS_LOW; 
-    SPI_Write(AD7193_SLAVE_ID, registerWord, 7);
+    SPI_Write(AD7193_SLAVE_ID, registerWord, 6);
 	  PMOD1_CS_HIGH;
 }
 
@@ -161,7 +157,6 @@ void ad7193_setpower(unsigned char pwrMode)
      unsigned int newPwrMode = 0x0; 
  
      oldPwrMode = ad7193_get_register_value(AD7193_REG_MODE, 3, 1);
-	   temp_nRegValue =oldPwrMode;
      oldPwrMode &= ~(AD7193_MODE_SEL(0x7));//清除模式选择位数据
      newPwrMode = oldPwrMode | AD7193_MODE_SEL((pwrMode * (AD7193_MODE_IDLE))|(!pwrMode * (AD7193_MODE_PWRDN)));
      ad7193_set_register_value(AD7193_REG_MODE, newPwrMode, 3, 1);  
@@ -193,10 +188,10 @@ void ad7193_wait_ready_go_low(void)
 	#if 1
      //unsigned int wait_timeout = 0xFFFFF;
      //当获得转换结果时，DOUT/RDY便会变为低电平，表示转换完成
-     //while(AD7193_RDY_STATE&&wait_timeout--)
-	
-     unsigned int wait_timeout = 0xFFFF;
-     while(AD7193_RDY_STATE&&wait_timeout--)//设置一个超时时间，限制阻塞时长。
+
+     unsigned int wait_timeout = 0xFFFF;  
+		 //while(AD7193_RDY_STATE&&wait_timeout--)
+     while(AD7193_RDY_STATE)//设置一个超时时间，限制阻塞时长。
      {
 
      }
@@ -223,13 +218,23 @@ void ad7193_channel_select(unsigned short channel)
 {
     unsigned int oldRegValue = 0x0;
     unsigned int newRegValue = 0x0;   
-     
+
+#if 0	
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//读取目标寄存器值
-	  temp_nRegValue =oldRegValue;
+	  tmp_RegValue=oldRegValue;
     oldRegValue &= ~(AD7193_CONF_CHAN(0x3FF));                     //清除通道配置位数据
     newRegValue = oldRegValue | AD7193_CONF_CHAN(1 << channel);    //设置新值 
-	  temp_nRegValue =newRegValue;	
     ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1); //将新值重新写入寄存器
+#else
+    PMOD1_CS_LOW; //使能SPI	
+    oldRegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 0);//读取配置寄存器值
+	  tmp_RegValue=oldRegValue;
+    oldRegValue &= ~(AD7193_CONF_CHAN(0x3FF));                   //清除通道配置位数据
+    newRegValue = oldRegValue | AD7193_CONF_CHAN(1 << channel);    //设置新值 
+	  tmp_RegValue=oldRegValue;	
+    ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0); //将新值重新写入寄存器
+    PMOD1_CS_HIGH;	
+#endif
 }
 
 /***************************************************************************//**
@@ -242,22 +247,30 @@ void ad7193_channel_select(unsigned short channel)
 *******************************************************************************/
 void ad7193_calibrate(unsigned char mode, unsigned short channel)
 {
-     unsigned int oldRegValue = 0x0;
-     unsigned int newRegValue = 0x0;
-    
+    unsigned int oldRegValue = 0x0;
+    unsigned int newRegValue = 0x0;
+	
     ad7193_channel_select(channel);                                //选择通道
-    
+#if 0  
     oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 1);//读取模式寄存器数据
-	  temp_nRegValue =oldRegValue;	
+		tmp_RegValue=oldRegValue;
     oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
-	  temp_nRegValue =oldRegValue;		
     newRegValue = oldRegValue | AD7193_MODE_SEL(mode);             //设置新值 
-		temp_nRegValue =newRegValue;	
+	
     PMOD1_CS_LOW; 
     ad7193_set_register_value(AD7193_REG_MODE, newRegValue, 3, 0); //将新值重新写入寄存器
-    ad7193_wait_ready_go_low();//等待完成
+   // ad7193_wait_ready_go_low();//等待完成
     PMOD1_CS_HIGH;
-
+#else
+    PMOD1_CS_LOW; //使能SPI	
+    oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 0);//读取模式寄存器数据
+		tmp_RegValue=oldRegValue;
+    oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
+    newRegValue = oldRegValue | AD7193_MODE_SEL(mode);             //设置新值 
+    ad7193_set_register_value(AD7193_REG_MODE, newRegValue, 3, 0); //将新值重新写入寄存器
+   // ad7193_wait_ready_go_low();//等待完成
+    PMOD1_CS_HIGH;	
+#endif
 }
 
 /***************************************************************************//**
@@ -272,22 +285,71 @@ void ad7193_calibrate(unsigned char mode, unsigned short channel)
 
  * @return none.
 *******************************************************************************/
+#if 0
 void ad7193_range_setup(unsigned char polarity, unsigned char range)
 {
     unsigned int oldRegValue = 0x0;
     unsigned int newRegValue = 0x0;
 
-	
+#if 0
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 1);//先读取配置寄存器的值
-	  temp_nRegValue =oldRegValue;	
+	  tmp_RegValue= oldRegValue;
     oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
 	
     newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
     ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1);//写入配置寄存器内
+	  tmp_RegValue= newRegValue;
+#else
+		PMOD1_CS_LOW; //使能SPI
+    oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 0);//先读取配置寄存器的值
+	  tmp_RegValue= oldRegValue;
+    oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
+	
+    newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
+    ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0);//写入配置寄存器内
+	  tmp_RegValue= newRegValue;
+	  PMOD1_CS_HIGH;
 
+#endif	
     currentPolarity = polarity;//记录当前设置的极性
     currentGain = 1 << range;  //记录当前设置的增益
 }
+#else
+void ad7193_range_setup1( unsigned short channel,unsigned char polarity, unsigned char range)
+{
+    unsigned int oldRegValue = 0x0;
+    unsigned int newRegValue = 0x0;
+
+#if 0
+    oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 1);//先读取配置寄存器的值
+	  tmp_RegValue= oldRegValue;
+    oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
+	
+    newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
+    ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1);//写入配置寄存器内
+	  tmp_RegValue= newRegValue;
+#else
+		PMOD1_CS_LOW; //使能SPI
+    oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 0);//先读取配置寄存器的值
+	  tmp_RegValue= oldRegValue;
+	
+	#if 0
+	  oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7)|AD7193_CONF_CHAN(0x3FF));//清除极性位和增益设置位数据,清除通道配置位数据
+	#else
+    oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据,清除通道配置位数据
+	#endif
+    newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range)|AD7193_CONF_CHAN(1<<channel); //再重新配置寄存器的值
+    ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0);//写入配置寄存器内
+	  tmp_RegValue= newRegValue;
+		
+		
+	  PMOD1_CS_HIGH;
+
+#endif	
+    currentPolarity = polarity;//记录当前设置的极性
+    currentGain = 1 << range;  //记录当前设置的增益
+}
+#endif
 
 /***************************************************************************//**
  * @brief Returns the result of a single conversion.
@@ -327,7 +389,7 @@ unsigned int ad7193_single_conversion(void)
 
     PMOD1_CS_LOW;
     ad7193_set_register_value(AD7193_REG_MODE, command, 3, 0); // CS is not modified.
-    ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
+    //ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
     regData = ad7193_get_register_value(AD7193_REG_DATA, 3, 0);
     PMOD1_CS_HIGH;
     
@@ -342,7 +404,6 @@ unsigned int ad7193_single_conversion(void)
 unsigned int ad7193_continuous_readavg(unsigned char sampleNumber)
 {
     unsigned int samplesAverage = 0;
-    unsigned int command        = 0;
     unsigned char count         = 0;
  /*
     连续转换模式是上电后的默认转换模式。AD7193连续进行转换，
@@ -372,29 +433,25 @@ unsigned int ad7193_continuous_readavg(unsigned char sampleNumber)
     4. AD7193选择下一个使能通道，并在该通道上执行转换。
     5. 当ADC在下一个通道上执行转换时，用户可以读取数据寄存器。 
 
- */       
-    #if USE_EXT_CLOCK
-		  //配置连续转换/使用外部晶振/滤波器输出数据速率
-			command = AD7193_MODE_SEL(AD7193_MODE_CONT)|\
-                      AD7193_MODE_CLKSRC(AD7193_CLK_EXT_MCLK1_2)|\
-                      AD7193_MODE_RATE(0x060);		
-	  #else
-	    //配置连续转换/使用内部晶振/滤波器输出数据速率
-			command = AD7193_MODE_SEL(AD7193_MODE_CONT)|\
-                      AD7193_MODE_CLKSRC(AD7193_CLK_INT)|\
-                      AD7193_MODE_RATE(0x060)|AD7193_MODE_DAT_STA; 
-	  #endif
-	
+ */      
+    #if 0
     PMOD1_CS_LOW;
-    ad7193_set_register_value(AD7193_REG_MODE, command, 3, 0); //配置模式寄存器数据
     for(count = 0; count < sampleNumber; count++)
     {
-        ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
-        samplesAverage += ad7193_get_register_value(AD7193_REG_DATA, 3, 0); //获取数据寄存器的数据 
+				//ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
+				samplesAverage += ad7193_get_register_value(AD7193_REG_DATA, 3, 0); //获取数据寄存器的数据 
     }
     PMOD1_CS_HIGH;
+		#else
+    PMOD1_CS_LOW;
+    for(count = 0; count < sampleNumber; count++)
+    {
+				//ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
+				samplesAverage += ad7193_get_register_value(AD7193_REG_DATA, 3, 0); //获取数据寄存器的数据 
+    }
+    PMOD1_CS_HIGH;		
+		#endif
     samplesAverage = samplesAverage / sampleNumber;//求均值
-    
     return samplesAverage;
 }
 
@@ -497,4 +554,56 @@ void ad7193_bpdsw_set(unsigned char set_val)
     ad7193_set_register_value(AD7193_REG_GPOCON, newRegValue, 3, 1);//写入配置寄存器内
 }
 
+/*
+*/
+void ad7193_config_init(void)
+{
+#if 0
+	//通道零点和量程进行预校准
+   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
+   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
 
+   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+
+   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2); 
+
+   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+	
+   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_TEMP);
+   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_TEMP); 	
+  //温度是双极性配置 
+	ad7193_range_setup(0, AD7193_CONF_GAIN_1);/* Select Bipolar operation and ADC's input range to +-2.5V. */	
+	ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
+	ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
+	ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
+	ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
+	ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道	
+#else
+	ad7193_range_setup1(AD7193_CH_0,   0, AD7193_CONF_GAIN_1);//	
+	ad7193_range_setup1(AD7193_CH_1,   0, AD7193_CONF_GAIN_1);//	
+	ad7193_range_setup1(AD7193_CH_2,   0, AD7193_CONF_GAIN_1);//	
+	ad7193_range_setup1(AD7193_CH_3,   0, AD7193_CONF_GAIN_1);//
+	ad7193_range_setup1(AD7193_CH_TEMP,0, AD7193_CONF_GAIN_1);//
+#endif	
+#if 0
+	unsigned int command        = 0;
+	#if USE_EXT_CLOCK
+		//配置连续转换/使用外部晶振/滤波器输出数据速率
+		command = AD7193_MODE_SEL(AD7193_MODE_CONT)|AD7193_MODE_CLKSRC(AD7193_CLK_EXT_MCLK1_2)|AD7193_MODE_RATE(0x060);		
+	#else
+	//配置连续转换/使用内部晶振/滤波器输出数据速率(上电缺省默认值)
+	command = AD7193_MODE_SEL(AD7193_MODE_CONT)|AD7193_MODE_CLKSRC(AD7193_CLK_INT)|AD7193_MODE_RATE(0x060)/*|AD7193_MODE_DAT_STA*/; 
+	#endif
+	ad7193_set_register_value(AD7193_REG_MODE, command, 3, 1); //配置模式寄存器数据
+	printf("Command is %#X...\r\n",command);		
+#endif		
+	tmp_RegValue = ad7193_get_register_value(AD7193_REG_MODE,3,1);//读模式寄存器
+	printf("Mode_RegValue is %#X...\r\n",tmp_RegValue);		//0X80060
+	tmp_RegValue = ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
+	printf("Status_RegValue is %#X...\r\n",tmp_RegValue);	//0x80
+	tmp_RegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//写入配置寄存器内		
+	printf("Config_RegValue is %#X...\r\n",tmp_RegValue);	//0X10010
+}

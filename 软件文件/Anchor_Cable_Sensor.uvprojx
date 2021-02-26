@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>STM32L432xx</Define>
               <Undefine></Undefine>
-              <IncludePath>.\DRIVER;.\CMSIS;.\USER\Inc</IncludePath>
+              <IncludePath>.\DRIVER;.\CMSIS;.\USER\Inc;.\IIC</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

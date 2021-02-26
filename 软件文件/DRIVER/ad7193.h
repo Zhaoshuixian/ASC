@@ -165,4 +165,7 @@ float ad7193_temperature_read(unsigned int dataReg);
 float ad7193_convert_to_volts(unsigned int rawData, float vRef);
 
 void ad7193_bpdsw_set(unsigned char set_val);
+void ad7193_config_init(void);
+
+void ad7193_range_setup1( unsigned short channel,unsigned char polarity, unsigned char range);
 #endif /* __AD7193_H__ */

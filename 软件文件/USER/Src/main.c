@@ -12,7 +12,8 @@
   2. 实现LED功能
   3. 实现按键功能
   4. 实现串口USART1打印功能
-  5. 
+  5. 实现AD7193数据读取
+  6. 实现BMI160数据读取
 
 */
 
@@ -21,9 +22,8 @@
 #include "misc.h"
 #include "ad7193.h"
 #include "bmi160_bsp.h"
-#include "stdio.h"
 
-struct bmi160_dev sensor_bmi160;
+
 uint8_t SleepMode_Enter_Flag=0;
 uint8_t LED_Status_Flag=0;
 
@@ -120,25 +120,25 @@ int fputc(int ch, FILE *f)
 */
 void device_led_contrl(void)
 {
-  switch(LED_Status_Flag)
-  {
-     case 0://闪烁
-          HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-           break;
-     case 1://常亮
-          HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_RESET);
-           break;    
-     case 2://常灭
-          HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
-           break;
-     case 3://眨闪
-			    // HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_RESET);
-		      // HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
-           break;         
-  }
+	switch(LED_Status_Flag)
+	{
+		case 0://闪烁
+			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+			break;
+		case 1://常亮
+			HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_RESET);
+			break;    
+		case 2://常灭
+			HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
+			break;
+		case 3://眨闪
+			// HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_RESET);
+			// HAL_GPIO_WritePin(GPIOA,DEV_LED_Pin,GPIO_PIN_SET);
+			break;         
+	}
 }
 
-unsigned int status_reg_val=0;
+unsigned char status_reg_val=0;
 /*
 **AD7193相关数据读取
 */
@@ -157,146 +157,55 @@ AD7193将通过以下序列自动处理这种状况：
 5. 当ADC在下一个通道上执行转换时，用户可以读取数据寄存器。
 
 */
-#if 1	
-  // ch_raw_avg_data[0] = ad7193_continuous_readavg(10);//连续转换
-  // ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);	
-
-  // ch_raw_avg_data[1] = ad7193_continuous_readavg(10);	
-  // ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);	
-
-  // ch_raw_avg_data[2] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-  // ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);/*Converts 24-bit raw data to volts. */	
-
-  // ch_raw_avg_data[3] = ad7193_continuous_readavg(10);/* Returns the average of several conversion results.*/
-  // ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);	 /*Converts 24-bit raw data to volts. */
-
-//   status_reg_val=ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
-//   status_reg_val&=0x0F;    
-//    
-//   switch(status_reg_val)//当前数据所在通道的指示
-//   {
-//      case AD7193_CH_0:
-//      printf("CH0...\r\n");
-//      break;
-//      case AD7193_CH_1:
-//      printf("CH1...\r\n");      
-//      break;
-//      case AD7193_CH_2:
-//      printf("CH2...\r\n");     
-//      break;
-//      case AD7193_CH_3:
-//       printf("CH3...\r\n");
-//      break;   
-//      case AD7193_CH_TEMP:
-//       printf("CHTEMP...\r\n");
-//      break;        
-//   }	
-	status_reg_val = ad7193_get_register_value(AD7193_REG_MODE, 3, 1);//读取模式寄存器数据
-  ch_raw_avg_data[4] = ad7193_continuous_readavg(10);//连续转换
-  chip_temperature = ad7193_temperature_read(ch_raw_avg_data[4]);	/* Read the temperature. */	
-
+	status_reg_val=ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
+	status_reg_val&=0x0F;    
+	switch(status_reg_val)//当前数据所在通道的指示
+	{
+		case AD7193_CH_0:
+		printf("CH0...\r\n");
+		ch_raw_avg_data[0] = ad7193_continuous_readavg(10);//连续转换
+		ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);				
+		break;
+		case AD7193_CH_1:
+		printf("CH1...\r\n");  
+		ch_raw_avg_data[1] = ad7193_continuous_readavg(10);	
+		ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);				
+		break;
+		case AD7193_CH_2:
+		printf("CH2...\r\n");
+		ch_raw_avg_data[2] = ad7193_continuous_readavg(10);
+		ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);				
+		break;
+		case AD7193_CH_3:
+		printf("CH3...\r\n");
+		ch_raw_avg_data[3] = ad7193_continuous_readavg(10);
+		ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);		
+		break;   
+		case AD7193_CH_TEMP:
+		printf("CHTEMP...\r\n");
+		ch_raw_avg_data[4] = ad7193_continuous_readavg(10);//连续转换
+		chip_temperature = ad7193_temperature_read(ch_raw_avg_data[4]);
+		break; 
+		default:  
+		printf("UNKOWN %d...\r\n",status_reg_val);				
+		break; 		
+	}
 #ifdef DEBUG_MODE
-  for(unsigned char i=0;i< 4;i++)
-  {
-    if(prv_ch_volt[i]!=ch_volt[i])
-    {
-      prv_ch_volt[i] = ch_volt[i];
-      printf("CH%d Volts is %fV...\r\n",i,prv_ch_volt[i]);		 
-    }    
-  }
-  if(prv_chip_temperature != chip_temperature)
-  {
-     prv_chip_temperature = chip_temperature;
-     printf("Current Chip temperature is %fC...\r\n",prv_chip_temperature);
-  }   
+	for(unsigned char i=0;i< 4;i++)
+	{
+		if(prv_ch_volt[i]!=ch_volt[i])
+		{
+			prv_ch_volt[i] = ch_volt[i];
+			printf("CH%d Volts is %fV...\r\n",i,prv_ch_volt[i]);		 
+		}    
+	}
+	if(prv_chip_temperature != chip_temperature)
+	{
+		 prv_chip_temperature = chip_temperature;
+		 printf("Current Chip temperature is %fC...\r\n",prv_chip_temperature);
+	}   
 #endif
-#else 
-	
-typedef enum
-{
-  CH0_SEL=0,
-  CH0_READ,
-  CH1_SEL,
-  CH1_READ,
-  CH2_SEL,
-  CH2_READ,
-  CH3_SEL,
-  CH3_READ,
-  CHTEMP_SEL,
-  CHTEMP_READ 
-}ch_status;
 
-static ch_status ch_transfer_status;//通道转移状态
-
-
-	
-switch(ch_transfer_status)
-{
-  case CH0_SEL://通道选择
-    printf("CH0_SEL...\r\n");
-    ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */   
-    ch_transfer_status=CH0_READ;  
-  break;
-  case CH0_READ://数据读取
-    printf("CH0_READ...\r\n");
-    ch_raw_avg_data[0] = ad7193_continuous_readavg(5);//连续转换
-    ch_volt[0] = ad7193_convert_to_volts(ch_raw_avg_data[0],5.0);
-    printf("CH0 Volts is %fV...\r\n",ch_volt[0]);	    
-    ch_transfer_status=CH1_SEL;
-  break;  
-  case CH1_SEL://通道切换时，调制器和滤波器将复位。切换通道后，需要为第一次转换留出足够的建立时间
-    printf("CH1_SEL...\r\n");
-    ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
-    ch_transfer_status=CH1_READ;
-  break;
-  case CH1_READ:
-    printf("CH1_READ...\r\n");  
-    ch_raw_avg_data[1] = ad7193_continuous_readavg(5);	
-    ch_volt[1] = ad7193_convert_to_volts(ch_raw_avg_data[1],5.0);
-    printf("CH1 Volts is %fV...\r\n",ch_volt[1]);	    
-    ch_transfer_status=CH2_SEL;	  
-  break; 
-  case CH2_SEL:
-    printf("CH2_SEL...\r\n");  
-    ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
-    ch_transfer_status=CH2_READ;
-  break;
-  case CH2_READ:
-    printf("CH2_READ...\r\n");    
-    ch_raw_avg_data[2] = ad7193_continuous_readavg(5);/* Returns the average of several conversion results.*/
-    ch_volt[2] = ad7193_convert_to_volts(ch_raw_avg_data[2],5.0);/*Converts 24-bit raw data to volts. */
-    printf("CH2 Volts is %fV...\r\n",ch_volt[2]);	    
-    ch_transfer_status=CH3_SEL;	  	  
-  break; 
-  case CH3_SEL:
-    printf("CH3_SEL...\r\n");  
-    ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */
-    ch_transfer_status=CH3_READ;   	
-  break;
-  case CH3_READ:
-    printf("CH2_READ...\r\n");    
-    ch_raw_avg_data[3] = ad7193_continuous_readavg(5);/* Returns the average of several conversion results.*/
-    ch_volt[3] = ad7193_convert_to_volts(ch_raw_avg_data[3],5.0);	 /*Converts 24-bit raw data to volts. */ 
-    printf("CH3 Volts is %fV...\r\n",ch_volt[3]);	
-    ch_transfer_status=CHTEMP_SEL;	    
-  break;
-  case CHTEMP_SEL:
-    printf("CHTEMP_SEL...\r\n");  
-    ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道	
-    ch_transfer_status=CHTEMP_READ;   
-  break;
-  case CHTEMP_READ: 
-    printf("CHTEMP_READ...\r\n");  
-    ch_raw_avg_data[4] = ad7193_continuous_readavg(5);
-    chip_temperature = ad7193_temperature_read(ch_raw_avg_data[4]);	/* Read the temperature. */	  
-    printf("Current Chip temperature is %fC...\r\n",chip_temperature);	
-    ch_transfer_status=CH0_SEL;  
-  break;
-  default:
-  break;  
-}
-
-#endif
 }
 
 /*
@@ -304,7 +213,7 @@ switch(ch_transfer_status)
 */
 void device_bmi160_read(void)
 {
-
+  bmi160_read_sensor_data(&sensor_bmi160);
 }
 
 /*
@@ -349,22 +258,23 @@ int main(void)
 	__TODO:	
   SystemClock_Config();
   MX_GPIO_Init();
-  //HAL_Delay(3000);	//等待电源稳定
+  HAL_Delay(3000);	//等待电源稳定
   MX_DMA_Init();
-//  MX_I2C1_Init();  //for BMI160
+  MX_I2C1_Init();  //for BMI160
   MX_SPI3_Init();  //for AD7193
   MX_USART1_UART_Init();
 //  MX_USART2_UART_Init();	
-	  
-//	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
-//	{
-//		  printf(">> BMI160 Init failed...\r\n");
-//			while(1)
-//			{
-//				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-//				HAL_Delay(150);//LED闪烁指示
-//			}
-//	}	
+	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
+	{
+		  printf(">> BMI160 Init failed...\r\n");
+			while(1)
+			{
+				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+				HAL_Delay(150);//LED闪烁指示
+			}
+	}	
+  printf(">> BMI160 Chip ID is %#X...\r\n",sensor_bmi160.chip_id);
+	bmi160_config_init();
 	/*
 		AD7193具体步骤：
 		1.Init
@@ -391,35 +301,8 @@ int main(void)
 	}
   ad7193_reset(); //// Resets the device.
 	HAL_Delay(1);	// >500us 
-	//通道零点和量程进行预校准
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
-
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
-
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2); 
-
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+  ad7193_config_init();
 	
-//   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_TEMP);
-  // ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_TEMP); 
-
-	//温度是双极性配置 
-	ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道
-  ad7193_range_setup(0, AD7193_CONF_GAIN_1);/* Select Bipolar operation and ADC's input range to +-2.5V. */
-	#if 1
-  // ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
-  // ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
-  // ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
-  // ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
- // ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道
-//	chip_temperature=ad7193_temperature_read1();
-//	printf("Current Chip temperature is %fC...\r\n",chip_temperature);
-	#endif
-  // ad7193_bpdsw_set(1);
 	#ifdef DEBUG_MODE
   printf("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
   printf("\r\n------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);
@@ -433,11 +316,11 @@ int main(void)
       //1.1 -- LED TASK--	
       tasks_create(device_led_contrl, LED_TASK_TIME,    1); //OK
       //1.2 -- BMI160 TASK--	
-      //tasks_create(device_bmi160_read,BMI160_TASK_TIME, 2);
+      tasks_create(device_bmi160_read,BMI160_TASK_TIME, 2);
       //1.3 -- AD7193 TASK--
-      tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
+     // tasks_create(device_ad7193_read,AD7193_TASK_TIME, 3);    
       //1.4 -- KEY_BUTTON TASK--	
-      //tasks_create(device_key_read,   KEY_TASK_TIME,    4);//OK    
+      tasks_create(device_key_read,   KEY_TASK_TIME,    4);//OK    
       //1.5 -- EXT TEMPER_SENSOR TASK--
       //tasks_create(device_temper_read,TEMPER_TASK_TIME, 5);    
       //1.6 -- EXT_TRIG_SINGAL TASK--
@@ -477,6 +360,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void System_Config_When_Enter_StopMode(void)
 { 
   //为了将功耗降到最低，将引脚恢复初始化状态
+	
   GPIO_InitTypeDef GPIO_InitStructure;	
 
 	HAL_SPI_MspDeInit(&hspi3);  //缺省SPI设备
@@ -661,7 +545,7 @@ void SystemClock_Config(void)
   */
 static void MX_I2C1_Init(void)
 {
-  hi2c1.Instance              = I2C1;
+  hi2c1.Instance              = I2C1;	
   hi2c1.Init.Timing           = 0x10D05E82;
   hi2c1.Init.OwnAddress1      = 0x0; //设置I2C从机地址
   hi2c1.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;//7位地址模式
@@ -674,9 +558,9 @@ static void MX_I2C1_Init(void)
 	//配置初始化
   if (HAL_I2C_Init(&hi2c1) != HAL_OK) Error_Handler();
   //模拟滤波配置
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)  Error_Handler();
+//  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)  Error_Handler();
   //数字滤波配置
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK) Error_Handler();
+//  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK) Error_Handler();
 }
 
 /**

@@ -1,9 +1,0 @@
-.\objects\bmi160.o: DRIVER\bmi160.c
-.\objects\bmi160.o: .\RTE\_ACS\Pre_Include_Global.h
-.\objects\bmi160.o: DRIVER\bmi160.h
-.\objects\bmi160.o: DRIVER\bmi160_defs.h
-.\objects\bmi160.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
-.\objects\bmi160.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
-.\objects\bmi160.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
-.\objects\bmi160.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
-.\objects\bmi160.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
