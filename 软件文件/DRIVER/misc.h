@@ -4,14 +4,22 @@
 #define __MISC_H__
 
 #include "stm32l4xx_hal.h"
-
 #include "main.h"
 
-void bmi160_pwr_switch(unsigned char x);
-void ad7193_pwr_switch(unsigned char x);
-void temp_pwr_switch(unsigned char x);
+typedef void     (*ptask)(void);
+typedef uint32_t (*ptick)(void);
 
-void tasks_create(void (*fuc)(),uint32_t task_time,uint8_t id)  ;
+typedef struct 
+{
+   uint8_t id;
+   uint32_t timer;//任务超时计时器
+   uint32_t rtime;//运行时间
+   ptick tick_func;
+   ptask task_func;
+}task_st;
+
+
+void tasks_os_run(task_st *const ptask,unsigned char task_num);
 #endif
 
 

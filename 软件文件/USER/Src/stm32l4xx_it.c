@@ -56,8 +56,11 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern RTC_HandleTypeDef  hrtc;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
+extern DMA_HandleTypeDef  hdma_usart1_rx;//usart1_dma
+extern DMA_HandleTypeDef  hdma_usart2_rx;//usart2_dma
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -220,10 +223,11 @@ void EXTI0_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-
   /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
+
+
   /* USER CODE BEGIN USART1_IRQn 1 */
+  HAL_UART_IRQHandler(&huart1);		
 
   /* USER CODE END USART1_IRQn 1 */
 }
@@ -258,5 +262,40 @@ void EXTI15_10_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 
+void DMA2_Stream2_IRQHandler(void)
+{
+	//HAL_DMA_IRQHandler(&hdma_usart1_rx);
+}
+
+/*
+*********************************************************************************************************
+*    函 数 名:DMA2_Stream7_IRQHandler
+*    功能说明: 串口DMA发送中断函数
+*    形    参: 无
+*    返 回 值: 无
+*********************************************************************************************************
+*/
+void DMA2_Stream7_IRQHandler(void)
+{
+ //HAL_DMA_IRQHandler(&hdma_usart1_tx);
+}
+
 /* USER CODE END 1 */
+
+void RTC_Alarm_IRQHandler(void) 
+{
+	
+}
+
+/**
+  * @brief  This function handles RTC Auto wake-up interrupt request.
+  * @param  None
+  * @retval None
+  */
+void RTC_WKUP_IRQHandler(void)
+{
+  HAL_RTCEx_WakeUpTimerIRQHandler(&hrtc);
+}
+
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -2,107 +2,51 @@
 
 #include "misc.h"
 
-
-uint32_t task1_timeout=0;
-uint32_t task2_timeout=0;
-uint32_t task3_timeout=0;
-uint32_t task4_timeout=0;
-uint32_t task5_timeout=0;
-uint32_t task6_timeout=0;
-
-/**
-  BMI160 VCC SWITCH
-	*/
-void bmi160_pwr_switch(unsigned char x) 
+void tasks_os_run(task_st *const ptask,unsigned char task_num)
 {
-	if(x)
+	for(unsigned char i=0;i<task_num;i++)
 	{
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);		
-	}
-	else
-	{
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_RESET);		
-	}	
-}
-
-/**
-  AD7193 VCC SWITCH
-	*/
-void ad7193_pwr_switch(unsigned char x)  
-{
-	if(x)
-	{
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_6,GPIO_PIN_SET);		
-	}
-	else
-	{
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_6,GPIO_PIN_RESET);		
+		if((ptask[i].timer+ptask[i].rtime)<=ptask[i].tick_func())
+		{
+			ptask[i].timer = ptask[i].tick_func();//  
+			ptask[i].task_func();
+		}
 	}
 }
 
-/**
-  EXTTEMP VCC SWITCH
-	*/
-void temp_pwr_switch(unsigned char x) 
+
+typedef struct
 {
-	if(x)
-	{
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_12,GPIO_PIN_SET);		
-	}
-	else
-	{
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_12,GPIO_PIN_RESET);		
-	}	
+	unsigned char value;
+	unsigned int timeout;
+}sem_st;
+
+void sem_take(sem_st *const sem_me)
+{
+	sem_me->value=0;
 }
 
-void tasks_create(void (*fuc)(),uint32_t task_time,uint8_t id)  
+unsigned char sem_wait(sem_st *const sem_me,unsigned int timeout)
 {
-	switch(id)
+	sem_me->timeout=timeout;//等待时间
+  
+	while(sem_me->timeout)//
 	{
-		case 0:
-			break;		
-		case 1: 
-		if((task1_timeout+task_time)<=HAL_GetTick())
+		if(0xFFFFFFFF!=timeout)//设置最大值时，则代表永久等待
 		{
-			task1_timeout = HAL_GetTick();//  
-			(*fuc)();
-		} 						
-		break;	
-		case 2: 
-		if((task2_timeout+task_time)<=HAL_GetTick())
-		{
-			task2_timeout = HAL_GetTick();//  
-			(*fuc)();
-		} 						
-		break;		
-		case 3: 
-		if((task3_timeout+task_time)<=HAL_GetTick())
-		{
-			task3_timeout = HAL_GetTick();//  
-			(*fuc)();
-		}  						
-		break;	
-		case 4: 
-		if((task4_timeout+task_time)<=HAL_GetTick())
-		{
-			task4_timeout = HAL_GetTick();//  
-			(*fuc)();
-		} 						
-		break;
-		case 5: 
-		if((task5_timeout+task_time)<=HAL_GetTick())
-		{
-			task5_timeout = HAL_GetTick();//  
-			(*fuc)();
-		} 						
-		break;	
-		case 6: 
-		if((task6_timeout+task_time)<=HAL_GetTick())
-		{
-			task6_timeout = HAL_GetTick();//  
-			(*fuc)();
-		} 						
-		break;
+			sem_me->timeout--;
+		}
+		
+		if(sem_me->value) break;//拿到信号量，则立即退出
 	}
+	
+	return 0;
 }
+
+void sem_release(sem_st *const sem_me)
+{
+	sem_me->value=1;
+}
+
+
 

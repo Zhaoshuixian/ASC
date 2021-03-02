@@ -25,6 +25,39 @@
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
 
+void HAL_RTC_MspInit(RTC_HandleTypeDef *hrtc)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct;
+  RCC_PeriphCLKInitTypeDef  PeriphClkInitStruct;
+
+  /* -a- Enable LSI Oscillator */
+  RCC_OscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+  if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    while(1);
+  }
+
+  /* -b- Select LSI as RTC clock source */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  if(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  { 
+    while(1);
+  }
+  /* Enable RTC Clock */
+  __HAL_RCC_RTC_ENABLE();
+  
+  HAL_NVIC_SetPriority(RTC_WKUP_IRQn, 0x0, 0);
+  HAL_NVIC_EnableIRQ(RTC_WKUP_IRQn);
+}
+
+void HAL_RTC_MspDeInit(RTC_HandleTypeDef *hrtc)
+{
+  __HAL_RCC_RTC_DISABLE();
+}
+
 void HAL_MspInit(void)
 {
   __HAL_RCC_SYSCFG_CLK_ENABLE();
@@ -78,6 +111,7 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
     */
     HAL_GPIO_DeInit(BMI160_SCL_GPIO_Port, BMI160_SCL_Pin);
     HAL_GPIO_DeInit(BMI160_SDA_GPIO_Port, BMI160_SDA_Pin);
+		hi2c->State =HAL_I2C_STATE_RESET;//2021/02/26 ADD
   }
 }
 
@@ -129,6 +163,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     PB5     ------> SPI3_MOSI
     */
     HAL_GPIO_DeInit(GPIOB, AD7193_SCK_Pin|AD7193_MISO_Pin|AD7193_MOSI_Pin);
+		hspi->State =HAL_SPI_STATE_RESET;//2021/02/26 ADD
   }
 }
 
@@ -233,7 +268,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     PB7     ------> USART1_RX
     */
     HAL_GPIO_DeInit(GPIOB, BMI160_SCL_Pin|BMI160_SDA_Pin);
-
+		huart->gState =HAL_UART_STATE_RESET;//2021/02/26 ADD
     /* USART1 DMA DeInit */
     HAL_DMA_DeInit(huart->hdmarx);
 

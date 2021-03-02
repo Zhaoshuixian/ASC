@@ -5,6 +5,8 @@
 #include "stm32l4xx_hal.h"
 #include "stdio.h"
 
+#define DEBUG_MODE
+
 /*! Initializes the I2C communication peripheral. */
 unsigned char I2C_Init(unsigned long clockFreq);
 

@@ -43,7 +43,10 @@ unsigned char ad7193_init(void)
     regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取配置寄存器值
     tmp_RegValue=regVal;
     if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//判断IC是否挂载
-
+	
+    ad7193_reset(); //// Resets the device.
+	  HAL_Delay(1);	// >500us 
+	
     return status;
 }
 
@@ -185,22 +188,11 @@ void ad7193_wait_ready_go_low(void)
      但应确保后续读取操作的发生时间不能接近下一次输出更新时间。
      如果使能连续读取功能，数字字只能被读取一次。
    */
-	#if 1
-     //unsigned int wait_timeout = 0xFFFFF;
      //当获得转换结果时，DOUT/RDY便会变为低电平，表示转换完成
-
-     unsigned int wait_timeout = 0xFFFF;  
-		 //while(AD7193_RDY_STATE&&wait_timeout--)
      while(AD7193_RDY_STATE)//设置一个超时时间，限制阻塞时长。
      {
 
      }
-#else
-    while(AD7193_RDY_STATE)
-    {
-       AD7193_RDY_STATE;
-    }   
-#endif		
 }
 
 /***************************************************************************//**
@@ -320,34 +312,30 @@ void ad7193_range_setup1( unsigned short channel,unsigned char polarity, unsigne
     unsigned int oldRegValue = 0x0;
     unsigned int newRegValue = 0x0;
 
-#if 0
-    oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 1);//先读取配置寄存器的值
-	  tmp_RegValue= oldRegValue;
-    oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
-	
-    newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
-    ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1);//写入配置寄存器内
-	  tmp_RegValue= newRegValue;
-#else
-		PMOD1_CS_LOW; //使能SPI
-    oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 0);//先读取配置寄存器的值
-	  tmp_RegValue= oldRegValue;
-	
-	#if 0
-	  oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7)|AD7193_CONF_CHAN(0x3FF));//清除极性位和增益设置位数据,清除通道配置位数据
-	#else
-    oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据,清除通道配置位数据
-	#endif
-    newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range)|AD7193_CONF_CHAN(1<<channel); //再重新配置寄存器的值
-    ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0);//写入配置寄存器内
-	  tmp_RegValue= newRegValue;
-		
-		
-	  PMOD1_CS_HIGH;
+    #if 0
+        oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 1);//先读取配置寄存器的值
+        tmp_RegValue= oldRegValue;
+        oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
 
-#endif	
-    currentPolarity = polarity;//记录当前设置的极性
-    currentGain = 1 << range;  //记录当前设置的增益
+        newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
+        ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1);//写入配置寄存器内
+        tmp_RegValue= newRegValue;
+    #else
+        PMOD1_CS_LOW; //使能SPI
+        oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 0);//先读取配置寄存器的值
+        tmp_RegValue= oldRegValue;
+    #if 0
+        oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7)|AD7193_CONF_CHAN(0x3FF));//清除极性位和增益设置位数据,清除通道配置位数据
+    #else
+        oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据,清除通道配置位数据
+        #endif
+        newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range)|AD7193_CONF_CHAN(1<<channel); //再重新配置寄存器的值
+        ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0);//写入配置寄存器内
+        tmp_RegValue= newRegValue;
+        PMOD1_CS_HIGH;
+    #endif	
+        currentPolarity = polarity;//记录当前设置的极性
+        currentGain = 1 << range;  //记录当前设置的增益
 }
 #endif
 
@@ -389,7 +377,6 @@ unsigned int ad7193_single_conversion(void)
 
     PMOD1_CS_LOW;
     ad7193_set_register_value(AD7193_REG_MODE, command, 3, 0); // CS is not modified.
-    //ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
     regData = ad7193_get_register_value(AD7193_REG_DATA, 3, 0);
     PMOD1_CS_HIGH;
     
@@ -446,8 +433,7 @@ unsigned int ad7193_continuous_readavg(unsigned char sampleNumber)
     PMOD1_CS_LOW;
     for(count = 0; count < sampleNumber; count++)
     {
-				//ad7193_wait_ready_go_low();//读之前，等待DOUT/RDY拉低
-				samplesAverage += ad7193_get_register_value(AD7193_REG_DATA, 3, 0); //获取数据寄存器的数据 
+        samplesAverage += ad7193_get_register_value(AD7193_REG_DATA, 3, 0); //获取数据寄存器的数据 
     }
     PMOD1_CS_HIGH;		
 		#endif
