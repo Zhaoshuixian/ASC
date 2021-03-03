@@ -61,6 +61,7 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 extern DMA_HandleTypeDef  hdma_usart1_rx;//usart1_dma
 extern DMA_HandleTypeDef  hdma_usart2_rx;//usart2_dma
+extern uart_st uart1,uart2;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -208,13 +209,7 @@ void SysTick_Handler(void)
   */
 void EXTI0_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-
-  /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  /* USER CODE END EXTI0_IRQn 1 */
 }
 
 /**
@@ -222,14 +217,34 @@ void EXTI0_IRQHandler(void)
   */
 void USART1_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART1_IRQn 0 */
-  /* USER CODE END USART1_IRQn 0 */
+/* NOTICE:
+  1.查阅DATAsheet，发现修改发送DMA数据发送数寄存器前，需要先关闭DMA。
 
-
-  /* USER CODE BEGIN USART1_IRQn 1 */
+  2.查到别人代码有在中断中用HAL_UART_DMAStop(huart)关闭中断，
+  Debug后发现这个函数关闭RXDMA的同时关闭了TXDMA，
+  导致串口的接收到数据后会关闭正在执行的发送DMA，
+  会使串口不能同时进行收发数据，
+  故改为 __HAL_DMA_DISABLE(huart->hdmarx); 关闭对应的接收DMA。
+  原文链接：https://blog.csdn.net/rxlqn/article/details/83899748
+*/ 
+#if 0	
+	unsigned int ftemp;
+	if(__HAL_UART_GET_IT(&huart1, UART_IT_IDLE)!= RESET)
+	{
+		ftemp = USART1->RDR;
+		ftemp = USART1->TDR;
+		ftemp = ftemp;
+		uart1.rx_frame_flag=1;
+		__HAL_UART_CLEAR_IT(&huart1, UART_IT_IDLE);	//清除空闲中断标志		
+	}
+#else	
+	if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE) != RESET)//发生空闲中断
+	{
+		uart1.rx_frame_flag=1;
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);	//清除空闲中断标志
+	}
+#endif
   HAL_UART_IRQHandler(&huart1);		
-
-  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**
@@ -237,13 +252,25 @@ void USART1_IRQHandler(void)
   */
 void USART2_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART2_IRQn 0 */
 
-  /* USER CODE END USART2_IRQn 0 */
+#if 0
+	unsigned int ftemp;
+	if(__HAL_UART_GET_IT(&huart1, UART_IT_IDLE)!= RESET)
+	{
+		ftemp = USART2->RDR;
+		ftemp = USART2->TDR;
+		ftemp = ftemp;
+		uart2.rx_frame_flag=1;
+		__HAL_UART_CLEAR_IT(&huart1, UART_IT_IDLE);	//清除空闲中断标志		
+	}
+#else
+	if(__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE) != RESET)//发生空闲中断
+	{
+		uart2.rx_frame_flag=1;
+		__HAL_UART_CLEAR_IDLEFLAG(&huart2);	//清除空闲中断标志
+	}	
+#endif	
   HAL_UART_IRQHandler(&huart2);
-  /* USER CODE BEGIN USART2_IRQn 1 */
-
-  /* USER CODE END USART2_IRQn 1 */
 }
 
 /**
@@ -251,37 +278,10 @@ void USART2_IRQHandler(void)
   */
 void EXTI15_10_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-
-  /* USER CODE END EXTI15_10_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
-  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-
-  /* USER CODE END EXTI15_10_IRQn 1 */
-}
-
-/* USER CODE BEGIN 1 */
-
-void DMA2_Stream2_IRQHandler(void)
-{
-	//HAL_DMA_IRQHandler(&hdma_usart1_rx);
-}
-
-/*
-*********************************************************************************************************
-*    函 数 名:DMA2_Stream7_IRQHandler
-*    功能说明: 串口DMA发送中断函数
-*    形    参: 无
-*    返 回 值: 无
-*********************************************************************************************************
-*/
-void DMA2_Stream7_IRQHandler(void)
-{
- //HAL_DMA_IRQHandler(&hdma_usart1_tx);
 }
 
 /* USER CODE END 1 */
-
 void RTC_Alarm_IRQHandler(void) 
 {
 	

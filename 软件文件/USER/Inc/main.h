@@ -123,6 +123,15 @@ void Error_Handler(void);
 #define KEI_SIN_EXTI_IRQn EXTI15_10_IRQn
 
 
+#define UART_BUFF_SIZE  (255) //串口1接收最大缓存字节数
+typedef struct 
+{
+  unsigned char rx_buff[UART_BUFF_SIZE];//接收缓存区 
+  unsigned int  rx_len; //接收长度
+  unsigned char rx_frame_flag;
+}uart_st;
+
+
 #ifdef __cplusplus
 }
 #endif
