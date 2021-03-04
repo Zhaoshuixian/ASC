@@ -7,7 +7,6 @@
 
 extern struct bmi160_dev sensor_bmi160;
 
-
 unsigned char bmi160_bsp_init(struct bmi160_dev *me);
 unsigned char bmi160_config_accel_gyro_sensors_in_normal_mode(struct bmi160_dev *me);
 void bmi160_read_sensor_data(struct bmi160_dev *me);
@@ -20,6 +19,7 @@ void bmi160_config_flat_interrupt(struct bmi160_dev *me);
 void bmi160_config_step_detector_interrupt(struct bmi160_dev *me);
 unsigned char bmi160_user_space(struct bmi160_dev *me);
 void bmi160_config_init(void);
+void device_bmi160_handle(void);
 #endif
 
 

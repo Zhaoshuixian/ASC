@@ -2,6 +2,7 @@
     "files.associations": {
         "misc.h": "c",
         "ad7193.h": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "os.h": "c"
     }
 }

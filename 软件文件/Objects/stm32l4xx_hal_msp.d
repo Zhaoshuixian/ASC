@@ -1,6 +1,6 @@
 .\objects\stm32l4xx_hal_msp.o: USER\Src\stm32l4xx_hal_msp.c
 .\objects\stm32l4xx_hal_msp.o: .\RTE\_ACS\Pre_Include_Global.h
-.\objects\stm32l4xx_hal_msp.o: .\USER\Inc\main.h
+.\objects\stm32l4xx_hal_msp.o: .\DRIVER\misc.h
 .\objects\stm32l4xx_hal_msp.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal.h
 .\objects\stm32l4xx_hal_msp.o: .\USER\Inc\stm32l4xx_hal_conf.h
 .\objects\stm32l4xx_hal_msp.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_rcc.h

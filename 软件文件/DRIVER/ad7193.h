@@ -168,4 +168,5 @@ void ad7193_bpdsw_set(unsigned char set_val);
 void ad7193_config_init(void);
 
 void ad7193_range_setup1( unsigned short channel,unsigned char polarity, unsigned char range);
+void device_ad7193_handle(void);
 #endif /* __AD7193_H__ */

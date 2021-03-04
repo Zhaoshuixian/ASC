@@ -470,3 +470,10 @@ void bmi160_config_init(void)
 	}
 }
 
+/*
+**BMI160相关数据读取
+*/
+void device_bmi160_handle(void)
+{
+  bmi160_read_sensor_data(&sensor_bmi160);
+}

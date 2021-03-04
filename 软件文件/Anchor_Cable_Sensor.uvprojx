@@ -408,6 +408,36 @@
               <FileType>1</FileType>
               <FilePath>.\DRIVER\misc.c</FilePath>
             </File>
+            <File>
+              <FileName>uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>wtd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\wtd.c</FilePath>
+            </File>
+            <File>
+              <FileName>os.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\os.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

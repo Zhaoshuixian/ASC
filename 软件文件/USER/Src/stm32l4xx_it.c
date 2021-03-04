@@ -19,48 +19,13 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "uart.h"
 #include "stm32l4xx_it.h"
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-/* USER CODE END Includes */
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
-
-/* USER CODE END TD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/* External variables --------------------------------------------------------*/
 extern RTC_HandleTypeDef  hrtc;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
-extern DMA_HandleTypeDef  hdma_usart1_rx;//usart1_dma
-extern DMA_HandleTypeDef  hdma_usart2_rx;//usart2_dma
+
 extern uart_st uart1,uart2;
 /* USER CODE BEGIN EV */
 
@@ -261,7 +226,7 @@ void USART2_IRQHandler(void)
 		ftemp = USART2->TDR;
 		ftemp = ftemp;
 		uart2.rx_frame_flag=1;
-		__HAL_UART_CLEAR_IT(&huart1, UART_IT_IDLE);	//清除空闲中断标志		
+		__HAL_UART_CLEAR_IT(&huart2, UART_IT_IDLE);	//清除空闲中断标志		
 	}
 #else
 	if(__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE) != RESET)//发生空闲中断
@@ -279,12 +244,6 @@ void USART2_IRQHandler(void)
 void EXTI15_10_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
-}
-
-/* USER CODE END 1 */
-void RTC_Alarm_IRQHandler(void) 
-{
-	
 }
 
 /**

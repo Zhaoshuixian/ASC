@@ -1,5 +1,7 @@
 
 #include "ad7193.h"		// ad7193 definitions.
+#include "misc.h"
+
 
 /*
     polarity=	Sets the polarity value. Accepted values:
@@ -76,10 +78,10 @@ void ad7193_set_register_value(unsigned char registerAddress,unsigned int regist
         bytesNr --;
     }
     
-	  if(modifyCS) PMOD1_CS_LOW; //使能SPI
-		
+    if(modifyCS) PMOD1_CS_LOW; //使能SPI
+
     SPI_Write(AD7193_SLAVE_ID * modifyCS, writeCommand, bytesNumber + 1);	
-		
+
     if(modifyCS) PMOD1_CS_HIGH;
 }
 
@@ -220,10 +222,10 @@ void ad7193_channel_select(unsigned short channel)
 #else
     PMOD1_CS_LOW; //使能SPI	
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 0);//读取配置寄存器值
-	  tmp_RegValue=oldRegValue;
+    tmp_RegValue=oldRegValue;
     oldRegValue &= ~(AD7193_CONF_CHAN(0x3FF));                   //清除通道配置位数据
     newRegValue = oldRegValue | AD7193_CONF_CHAN(1 << channel);    //设置新值 
-	  tmp_RegValue=oldRegValue;	
+    tmp_RegValue=oldRegValue;	
     ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0); //将新值重新写入寄存器
     PMOD1_CS_HIGH;	
 #endif
@@ -256,11 +258,10 @@ void ad7193_calibrate(unsigned char mode, unsigned short channel)
 #else
     PMOD1_CS_LOW; //使能SPI	
     oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 0);//读取模式寄存器数据
-		tmp_RegValue=oldRegValue;
+	tmp_RegValue=oldRegValue;
     oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
     newRegValue = oldRegValue | AD7193_MODE_SEL(mode);             //设置新值 
     ad7193_set_register_value(AD7193_REG_MODE, newRegValue, 3, 0); //将新值重新写入寄存器
-   // ad7193_wait_ready_go_low();//等待完成
     PMOD1_CS_HIGH;	
 #endif
 }
@@ -585,11 +586,107 @@ void ad7193_config_init(void)
 	#endif
 	ad7193_set_register_value(AD7193_REG_MODE, command, 3, 1); //配置模式寄存器数据
 	printf("Command is %#X...\r\n",command);		
-#endif		
+#endif	
+#ifdef DEBUG_MODE	
 	tmp_RegValue = ad7193_get_register_value(AD7193_REG_MODE,3,1);//读模式寄存器
 	printf("Mode_RegValue is %#X...\r\n",tmp_RegValue);		//0X80060
 	tmp_RegValue = ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
 	printf("Status_RegValue is %#X...\r\n",tmp_RegValue);	//0x80
 	tmp_RegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//写入配置寄存器内		
 	printf("Config_RegValue is %#X...\r\n",tmp_RegValue);	//0X10010
+#endif
+}
+
+/*
+**AD7193相关数据读取
+*/
+typedef struct
+{
+	unsigned int raw_data;
+	float volt;
+}ch_st;	
+	
+ch_st ch[5]={0};
+
+void device_ad7193_handle(void)
+{
+    /*
+    如果使能多个通道，则每次切换通道时，ADC会给滤波器留出完整的建立时间，以便产生有效转换结果。
+    AD7193将通过以下序列自动处理这种状况：
+
+    1. 选择某个通道时，调制器和滤波器将复位。
+    2. AD7193允许完整的建立时间以产生有效转换结果。
+    3. DOUT/RDY会在有效转换结果可用时给出提示。
+    4. AD7193选择下一个使能通道，并在该通道上执行转换。
+    5. 当ADC在下一个通道上执行转换时，用户可以读取数据寄存器。
+    */
+    #define STATUS_REG_MASK  (0x0F)//掩码
+
+    unsigned char status_reg_val=0;
+    status_reg_val = ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
+    status_reg_val&= STATUS_REG_MASK;  
+
+    switch(status_reg_val)//当前数据所在通道的指示
+    {
+        case AD7193_CH_0:
+            #ifdef DEBUG_MODE
+            printf("CH0...\r\n");
+            #endif
+            ch[0].raw_data= ad7193_continuous_readavg(10);//连续转换
+            ch[0].volt= ad7193_convert_to_volts(ch[0].raw_data,5.0);				
+        break;
+        case AD7193_CH_1:
+            #ifdef DEBUG_MODE
+            printf("CH1...\r\n");
+            #endif
+            ch[1].raw_data = ad7193_continuous_readavg(10);	
+            ch[1].volt = ad7193_convert_to_volts(ch[1].raw_data,5.0);				
+        break;
+        case AD7193_CH_2:
+            #ifdef DEBUG_MODE
+            printf("CH2...\r\n");
+            #endif
+            ch[2].raw_data = ad7193_continuous_readavg(10);
+            ch[2].volt = ad7193_convert_to_volts(ch[2].raw_data,5.0);				
+        break;
+        case AD7193_CH_3:
+            #ifdef DEBUG_MODE
+            printf("CH3...\r\n");
+            #endif
+            ch[3].raw_data = ad7193_continuous_readavg(10);
+            ch[3].volt = ad7193_convert_to_volts(ch[3].raw_data,5.0);		
+        break;   
+        case AD7193_CH_TEMP:
+            #ifdef DEBUG_MODE    
+            printf("CHTEMP...\r\n");
+            #endif    
+            ch[4].raw_data = ad7193_continuous_readavg(10);//连续转换
+            ch[4].volt = ad7193_temperature_read(ch[4].raw_data);
+        break; 
+        default:  
+            #ifdef DEBUG_MODE     
+            printf("UNKOWN %d...\r\n",status_reg_val);	
+            #endif			
+        break; 		
+    }
+    #ifdef DEBUG_MODE
+    static ch_st ch_tmp[5];
+    for(unsigned char i=0;i< 4;i++)
+    {
+        if(ch_tmp[i].volt!=ch[i].volt)
+        {
+            ch_tmp[i].volt=ch[i].volt;
+            #ifdef DEBUG_MODE 
+            printf("CH%d Volts is %fV...\r\n",i,ch_tmp[i].volt);	
+            #endif      	 
+        }    
+    }
+    if(ch_tmp[4].volt!=ch[4].volt)
+    {
+        ch_tmp[4].volt=ch[4].volt;
+        #ifdef DEBUG_MODE      
+        printf("Current Chip temperature is %fC...\r\n",ch_tmp[4].volt);
+        #endif         
+    }   
+    #endif
 }
