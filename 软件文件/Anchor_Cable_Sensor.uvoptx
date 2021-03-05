@@ -73,7 +73,7 @@
         <LExpSel>0</LExpSel>
       </OPTXL>
       <OPTFL>
-        <tvExp>1</tvExp>
+        <tvExp>0</tvExp>
         <tvExpOptDlg>0</tvExpOptDlg>
         <IsCurrentTarget>1</IsCurrentTarget>
       </OPTFL>
@@ -152,18 +152,66 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>11</LineNumber>
+          <LineNumber>162</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134245294</Address>
+          <Address>0</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>0</BreakIfRCount>
+          <Filename>.\DRIVER\bmi160_bsp.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression></Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>162</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134239540</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Tek_Eng\Desktop\ASC宸ョ▼\杞欢鏂囦欢\DRIVER\misc.c</Filename>
+          <Filename>C:\Users\Tek_Eng\Desktop\ASC宸ョ▼\杞欢鏂囦欢\DRIVER\bmi160_bsp.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Anchor_Cable_Sensor\DRIVER/misc.c\11</Expression>
+          <Expression>\\Anchor_Cable_Sensor\DRIVER/bmi160_bsp.c\162</Expression>
+        </Bp>
+        <Bp>
+          <Number>2</Number>
+          <Type>0</Type>
+          <LineNumber>172</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134239596</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>C:\Users\Tek_Eng\Desktop\ASC宸ョ▼\杞欢鏂囦欢\DRIVER\bmi160_bsp.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Anchor_Cable_Sensor\DRIVER/bmi160_bsp.c\172</Expression>
+        </Bp>
+        <Bp>
+          <Number>3</Number>
+          <Type>0</Type>
+          <LineNumber>174</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134239616</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>C:\Users\Tek_Eng\Desktop\ASC宸ョ▼\杞欢鏂囦欢\DRIVER\bmi160_bsp.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Anchor_Cable_Sensor\DRIVER/bmi160_bsp.c\174</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -176,6 +224,11 @@
           <count>1</count>
           <WinNumber>1</WinNumber>
           <ItemText>multi_task</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>k,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>

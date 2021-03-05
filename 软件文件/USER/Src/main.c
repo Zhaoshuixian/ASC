@@ -12,7 +12,7 @@
   5. 实现AD7193数据读取
   6. 实现BMI160数据读取
   7. 实现RTC定时休眠唤醒
-	8. 实现UART_DMA接收（BUG:首上电产生IDEL中断）
+	8. 实现UART_DMA接收（BUG:首上电产生IDLE中断）
 */
 
 #include "misc.h"
@@ -32,12 +32,12 @@ RTC_HandleTypeDef  hrtc;  //rtc
 static void SystemClock_Config(void);
 static void SystemPower_Config(void);
 static void System_Config_When_Enter_StopMode(void);
+
 static void device_led_handle(void);
 static void device_temper_handle(void);
 static void device_key_handle(void);
 static void device_lpw_handle(void);
 static void hook_idle_handle(void);
-
 
 /*系统时基时间 ：1ms*/
 #define SYSTEM_TICK_TIME  (1)//
@@ -61,7 +61,7 @@ task_st multi_task[] =
   {5, 0,  0, KEY_TASK_TIME   , HAL_GetTick, device_key_handle   },
   {6, 1,  0, UART_TASK_TIME  , HAL_GetTick, device_uart_handle  }, // 
   {7, 0,  0, HOOK_TASK_TIME  , HAL_GetTick, hook_idle_handle    }, //暂时在HOOK中设计一个运行30s后自动进入休眠的任务，以验证休眠功能
-	{8, 1,  0, LPW_TASK_TIME  ,  HAL_GetTick, device_lpw_handle }
+	{8, 1,  0, LPW_TASK_TIME  ,  HAL_GetTick, device_lpw_handle   }
   //...Add task	
 };
 
@@ -191,8 +191,8 @@ void System_Config_When_Enter_StopMode(void)
   HAL_GPIO_DeInit(GPIOC,NC_2_Pin);	
 #endif
 	//关闭端口时钟
-  //	__HAL_RCC_GPIOA_CLK_DISABLE();	
-  //	__HAL_RCC_GPIOB_CLK_DISABLE();	//PB0  -> EXT_TRIG_SINGAL
+  //__HAL_RCC_GPIOA_CLK_DISABLE();	
+  //__HAL_RCC_GPIOB_CLK_DISABLE();	//PB0  -> EXT_TRIG_SINGAL
   //__HAL_RCC_GPIOC_CLK_DISABLE();  //PC15 -> KEY_BUTTON_SINGAL
   __HAL_RCC_PWR_CLK_ENABLE();  //打开电源管理时钟
   /* hrtc Wakeup Interrupt Generation: 
@@ -348,14 +348,14 @@ int main(void)
   MX_USART2_UART_Init();	
 	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 	{
-      #ifdef DEBUG_MODE    
-		  printf(">> BMI160 Init failed...\r\n");
-      #endif          
-			while(1) //失败进入阻塞提示
-			{
-				HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-				HAL_Delay(150);//LED闪烁指示
-			}
+    #ifdef DEBUG_MODE    
+    printf(">> BMI160 Init failed...\r\n");
+    #endif          
+    while(1) //失败进入阻塞提示
+    {
+      HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+      HAL_Delay(150);//LED闪烁指示
+    }
 	}	
   #ifdef DEBUG_MODE 
   printf(">> BMI160 Chip ID is %#X...\r\n",sensor_bmi160.chip_id);

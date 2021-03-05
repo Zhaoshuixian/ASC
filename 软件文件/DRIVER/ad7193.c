@@ -258,7 +258,7 @@ void ad7193_calibrate(unsigned char mode, unsigned short channel)
 #else
     PMOD1_CS_LOW; //使能SPI	
     oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 0);//读取模式寄存器数据
-	tmp_RegValue=oldRegValue;
+	  tmp_RegValue=oldRegValue;
     oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
     newRegValue = oldRegValue | AD7193_MODE_SEL(mode);             //设置新值 
     ad7193_set_register_value(AD7193_REG_MODE, newRegValue, 3, 0); //将新值重新写入寄存器
@@ -325,10 +325,10 @@ void ad7193_range_setup1( unsigned short channel,unsigned char polarity, unsigne
         PMOD1_CS_LOW; //使能SPI
         oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 0);//先读取配置寄存器的值
         tmp_RegValue= oldRegValue;
-    #if 0
-        oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7)|AD7193_CONF_CHAN(0x3FF));//清除极性位和增益设置位数据,清除通道配置位数据
-    #else
-        oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据,清除通道配置位数据
+        #if 0
+			oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7)|AD7193_CONF_CHAN(0x3FF));//清除极性位和增益设置位数据,清除通道配置位数据
+        #else
+			oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据,清除通道配置位数据
         #endif
         newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range)|AD7193_CONF_CHAN(1<<channel); //再重新配置寄存器的值
         ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0);//写入配置寄存器内
@@ -526,18 +526,11 @@ float ad7193_convert_to_volts(unsigned int rawData, float vRef)
 /*
 **
 */
-void ad7193_bpdsw_set(unsigned char set_val)
+void ad7193_bpdsw_set(void)
 {
-    unsigned long oldRegValue = 0x0;
     unsigned long newRegValue = 0x0;
     
-    oldRegValue = ad7193_get_register_value(AD7193_REG_GPOCON,3, 1);//先读取配置寄存器的值
-    oldRegValue &= ~(AD7193_GPOCON_BPDSW);//清除极性位和增益设置位数据
-
-    if(set_val)
-    {
-      newRegValue = oldRegValue|AD7193_GPOCON_BPDSW; //再重新配置寄存器的值
-    }
+    newRegValue |= AD7193_GPOCON_BPDSW; //再重新配置寄存器的值
     ad7193_set_register_value(AD7193_REG_GPOCON, newRegValue, 3, 1);//写入配置寄存器内
 }
 
@@ -587,13 +580,16 @@ void ad7193_config_init(void)
 	ad7193_set_register_value(AD7193_REG_MODE, command, 3, 1); //配置模式寄存器数据
 	printf("Command is %#X...\r\n",command);		
 #endif	
+    ad7193_bpdsw_set();
 #ifdef DEBUG_MODE	
-	tmp_RegValue = ad7193_get_register_value(AD7193_REG_MODE,3,1);//读模式寄存器
-	printf("Mode_RegValue is %#X...\r\n",tmp_RegValue);		//0X80060
-	tmp_RegValue = ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
-	printf("Status_RegValue is %#X...\r\n",tmp_RegValue);	//0x80
-	tmp_RegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//写入配置寄存器内		
-	printf("Config_RegValue is %#X...\r\n",tmp_RegValue);	//0X10010
+    tmp_RegValue = ad7193_get_register_value(AD7193_REG_MODE,3,1);//读模式寄存器
+    printf("Mode_RegValue is %#X...\r\n",tmp_RegValue);		        //0X80060
+    tmp_RegValue = ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
+    printf("Status_RegValue is %#X...\r\n",tmp_RegValue);	        //0x80
+    tmp_RegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//读配置寄存器		
+    printf("Config_RegValue is %#X...\r\n",tmp_RegValue);	        //0X10010
+    tmp_RegValue = ad7193_get_register_value(AD7193_REG_GPOCON, 3, 1);//读	
+    printf("Gpocon_RegValue is %#X...\r\n",tmp_RegValue);	        //	
 #endif
 }
 
@@ -670,23 +666,23 @@ void device_ad7193_handle(void)
         break; 		
     }
     #ifdef DEBUG_MODE
-    static ch_st ch_tmp[5];
-    for(unsigned char i=0;i< 4;i++)
-    {
-        if(ch_tmp[i].volt!=ch[i].volt)
+        static ch_st ch_tmp[5];
+        for(unsigned char i=0;i< 4;i++)
         {
-            ch_tmp[i].volt=ch[i].volt;
-            #ifdef DEBUG_MODE 
-            printf("CH%d Volts is %fV...\r\n",i,ch_tmp[i].volt);	
-            #endif      	 
-        }    
-    }
-    if(ch_tmp[4].volt!=ch[4].volt)
-    {
-        ch_tmp[4].volt=ch[4].volt;
-        #ifdef DEBUG_MODE      
-        printf("Current Chip temperature is %fC...\r\n",ch_tmp[4].volt);
-        #endif         
-    }   
+            if(ch_tmp[i].volt!=ch[i].volt)
+            {
+                ch_tmp[i].volt=ch[i].volt;
+                #ifdef DEBUG_MODE 
+                printf("CH%d Volts is %fV...\r\n",i,ch_tmp[i].volt);	
+                #endif      	 
+            }    
+        }
+        if(ch_tmp[4].volt!=ch[4].volt)
+        {
+            ch_tmp[4].volt=ch[4].volt;
+            #ifdef DEBUG_MODE      
+            printf("Current Chip temperature is %fC...\r\n",ch_tmp[4].volt);
+            #endif         
+        }   
     #endif
 }

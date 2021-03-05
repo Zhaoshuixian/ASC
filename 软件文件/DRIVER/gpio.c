@@ -86,7 +86,6 @@ void MX_GPIO_Init(void)
 	HAL_GPIO_WritePin(GPIOA, AD7193_CS_Pin, GPIO_PIN_SET); //PA15
 }
 
-
 /*
 ***GPIO外部中断回调函数
 */

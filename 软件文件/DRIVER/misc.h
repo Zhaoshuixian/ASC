@@ -23,7 +23,6 @@ void Error_Handler(void);
 
 
 /*PORT A*/
-
 #define J1_1_Pin GPIO_PIN_0
 #define J1_1_GPIO_Port GPIOA
 

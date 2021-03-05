@@ -3,6 +3,7 @@
         "misc.h": "c",
         "ad7193.h": "c",
         "main.h": "c",
-        "os.h": "c"
+        "os.h": "c",
+        "gpio.h": "c"
     }
 }

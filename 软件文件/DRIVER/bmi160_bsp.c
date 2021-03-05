@@ -2,6 +2,7 @@
 
 #include "bmi160_bsp.h"
 #include "comm.h"
+#include "misc.h"
 
 extern I2C_HandleTypeDef hi2c1;
 struct bmi160_dev sensor_bmi160;
@@ -100,7 +101,7 @@ unsigned char bmi160_config_accel_gyro_sensors_in_normal_mode(struct bmi160_dev 
 /*
 ***中值滤波算法
 */
-unsigned int midval_filter(unsigned int *sample_buff,unsigned char sample_num) 
+unsigned int midval_filter(int *sample_buff,unsigned char sample_num) 
 {
 	unsigned int temp;
 
@@ -133,19 +134,28 @@ unsigned int avg_filter(unsigned int *sample_buff,unsigned char sample_num)
 	return (sum/sample_num);//先求其和，再求其平均 
 }
 
+#define ACCEL_SWITCH_UNIT(x)  ((float)(x*9.8)/16384)  	// Sensivity S2g ex:(x*9.8)/(0x8000/2)
+#define GYRO_SWITCH_UNIT(x)   ((float)x/16.4)   		// RFS2000 ex: (x*2000)/0x7fff
+
 /*
 ***加速度数据转换
 */
-unsigned int accel_data_convert(unsigned int raw_data)
+float accel_data_convert(int16_t raw_data)
 {
-	
-	if(raw_data>0x7FFF)
-	{
-	  raw_data = -(0xFFFF-raw_data);
-	}
-	
-	raw_data = (raw_data*9.8)/(0x8000/2);//当量程为±2g时，转换为g/s的加速度换算公式(9.8)
+/*
+假如：Sensitivity [16bit] Type_value=16348@2G (1G约9.8g/s2)
+则：  总量程为4G,对应的数字值为2^16 (0~65535,Mid:32767)
+得出灵敏度值为4/2^16=16348LSB/g (Hex 0x10000)
+参考链接：https://blog.csdn.net/ZHONGCAI0901/article/details/110491101?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-11.control&dist_request_id=&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-11.control
 
+*/
+	/*+2G----------------0-------------------2G*/
+	/*0----------------32767--------------65535*/
+	/*-------------------END-------------------*/
+	
+	//G-sensor输出值也不是直接的加速度值，它的计量单位是通常用g表示，
+	//1g代表一个重力加速度，即9.8m/s^2。1g=1000mg。
+   raw_data=(float)(raw_data*9.8)/16384;
 	
 	return  raw_data;
 }
@@ -153,17 +163,25 @@ unsigned int accel_data_convert(unsigned int raw_data)
 /*
 ***陀螺仪数据转换
 */
-unsigned int gyro_data_convert(unsigned int raw_data)
+float gyro_data_convert(int16_t raw_data)
 {
-	if(raw_data>0x7FFF)
-	{
-			raw_data = -(0xFFFF-raw_data);
-	}
+	/*
+	Sensitivity [16bit] Type_value=16.4@FS2000
+	挂起模式到正常模式     55ms@1600MHz
+	快速启动模式到正常模式 10ms	
+    得出灵敏度值为4000°/2^16LSB  取倒数 约16.4LSB/°
+	*/	
 	
-	raw_data = (raw_data*2000)/0x7FFF;// range为2000dps时，转换为角速度°/s的公式	
+	/*+2000----------------------------------2000*/
+	/*0----------------32767--------------65535*/
+	/*-------------------END-------------------*/
 	
+	raw_data=(float)raw_data/16.4;  		// RFS2000 ex: (x*2000)/0x7fff
 	return raw_data;
 }
+
+float conv_accel_x=0,conv_accel_y=0,conv_accel_z=0;
+float conv_gyro_x=0,conv_gyro_y=0,conv_gyro_z=0;
 
 //读取传感器数据
 void bmi160_read_sensor_data(struct bmi160_dev *me)
@@ -172,8 +190,9 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 	
 	int8_t rslt = BMI160_OK;
 	
-	struct bmi160_sensor_data accel;
-	struct bmi160_sensor_data gyro;
+	struct bmi160_sensor_data accel,tmp_accel;
+	struct bmi160_sensor_data gyro,tmp_gyro;
+	
 
 #if DEBIG_MODE
 	/* To read only Accel data */
@@ -191,54 +210,15 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 	rslt = bmi160_get_sensor_data((BMI160_GYRO_SEL | BMI160_TIME_SEL), NULL, &gyro, me);
 #endif		
 
-#if 0
-	unsigned  int accel_xsample_buff[N];
-	unsigned  int accel_ysample_buff[N];
-	unsigned  int accel_zsample_buff[N];
-	
-	unsigned  int gyro_xsample_buff[N];	
-	unsigned  int gyro_ysample_buff[N];
-	unsigned  int gyro_zsample_buff[N];	
-	
-  for(unsigned char i= 0;i< N;i++)//连续读取
+	signed short int accel_sample_buff[3][N];//有符号位
+	signed short int gyro_sample_buff[3][N];
+
+	for(unsigned char i= 0;i< N;i++)//连续读取
 	{
 		/* To read both Accel and Gyro data along with time*///同时读取
 		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL | BMI160_TIME_SEL), &accel, &gyro, me);	
-
-		accel_xsample_buff[i] = accel.x;
-		accel_ysample_buff[i] = accel.y;	
-		accel_zsample_buff[i] = accel.z;	
-
-		gyro_xsample_buff[i] = gyro.x;
-		gyro_ysample_buff[i] = gyro.y;
-		gyro_zsample_buff[i] = gyro.z;		
-	}
-#if 0	
-	avg_filter(accel_xsample_buff,N) ;//经过滤波
-	avg_filter(accel_ysample_buff,N) ;//经过滤波
-	avg_filter(accel_zsample_buff,N) ;//经过滤波
-	
-	avg_filter(gyro_xsample_buff,N) ;//经过滤波
-	avg_filter(gyro_ysample_buff,N) ;//经过滤波
-	avg_filter(gyro_zsample_buff,N) ;//经过滤波	
-#else	
-	accel.x = midval_filter(accel_xsample_buff,N) ;//经过滤波
-	accel.y = midval_filter(accel_ysample_buff,N) ;//经过滤波
-	accel.z = midval_filter(accel_zsample_buff,N) ;//经过滤波
-
-	gyro.x = midval_filter(gyro_xsample_buff,N) ;//经过滤波
-	gyro.y = midval_filter(gyro_ysample_buff,N) ;//经过滤波
-	gyro.z = midval_filter(gyro_zsample_buff,N) ;//经过滤波	
-#endif
-#else
-	unsigned  int accel_sample_buff[3][N];
-	unsigned  int gyro_sample_buff[3][N];
-
-  for(unsigned char i= 0;i< N;i++)//连续读取
-	{
-		/* To read both Accel and Gyro data along with time*///同时读取
-		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL | BMI160_TIME_SEL), &accel, &gyro, me);	
-
+//	printf("Accel raw data is x=%d,y=%d,z=%d\r\n",accel.x,accel.y,accel.z);	
+//	printf("Gyro raw data is  x=%d,y=%d,z=%d\r\n",gyro.x, gyro.y, gyro.z);
 		accel_sample_buff[0][i] = accel.x;
 		accel_sample_buff[1][i] = accel.y;	
 		accel_sample_buff[2][i] = accel.z;	
@@ -247,23 +227,35 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 		gyro_sample_buff[1][i] = gyro.y;
 		gyro_sample_buff[2][i] = gyro.z;		
 	}
-	accel.x = midval_filter(accel_sample_buff[0],N) ;//经过滤波
-	accel.y = midval_filter(accel_sample_buff[1],N) ;//经过滤波
-	accel.z = midval_filter(accel_sample_buff[2],N) ;//经过滤波
+	//中值算法
+	tmp_accel.x = midval_filter((int *)accel_sample_buff[0],N) ;//经过滤波
+	tmp_accel.y = midval_filter((int *)accel_sample_buff[1],N) ;//经过滤波
+	tmp_accel.z = midval_filter((int *)accel_sample_buff[2],N) ;//经过滤波
 
-	gyro.x = midval_filter(gyro_sample_buff[0],N) ;//经过滤波
-	gyro.y = midval_filter(gyro_sample_buff[1],N) ;//经过滤波
-	gyro.z = midval_filter(gyro_sample_buff[2],N) ;//经过滤波	
-#endif
-//	accel.x =(float)accel_data_convert(accel.x);
-//	accel.y =(float)accel_data_convert(accel.y);
-//	accel.z =(float)accel_data_convert(accel.z);
+	tmp_gyro.x = midval_filter((int *)gyro_sample_buff[0],N) ;//经过滤波
+	tmp_gyro.y = midval_filter((int *)gyro_sample_buff[1],N) ;//经过滤波
+	tmp_gyro.z = midval_filter((int *)gyro_sample_buff[2],N) ;//经过滤波	
+#if 0
+	conv_accel_x =accel_data_convert(accel.x);
+	conv_accel_y =accel_data_convert(accel.y);
+	conv_accel_z =accel_data_convert(accel.z);	
 	
-//	gyro.x =(float)gyro_data_convert(gyro.x);
-//	gyro.y =(float)gyro_data_convert(gyro.y);
-//	gyro.z =(float)gyro_data_convert(gyro.z);	
-	printf("Accel data is x=%d,y=%d,z=%d...\r\n",accel.x,accel.y,accel.z);	
-	printf("Gyro data is x=%d,y=%d,z=%d...\r\n",gyro.x,gyro.y,gyro.z);			
+	conv_gyro_x =gyro_data_convert(gyro.x);
+	conv_gyro_y =gyro_data_convert(gyro.y);
+	conv_gyro_z =gyro_data_convert(gyro.z);	
+#else
+	conv_accel_x =ACCEL_SWITCH_UNIT(tmp_accel.x);
+	conv_accel_y =ACCEL_SWITCH_UNIT(tmp_accel.y);
+	conv_accel_z =ACCEL_SWITCH_UNIT(tmp_accel.z);	
+	
+	conv_gyro_x =GYRO_SWITCH_UNIT(tmp_gyro.x);
+	conv_gyro_y =GYRO_SWITCH_UNIT(tmp_gyro.y);
+	conv_gyro_z =GYRO_SWITCH_UNIT(tmp_gyro.z);	
+#endif
+	#ifdef DEBUG_MODE	
+	printf("Accel convert data is x=%0.2fg/s,y=%0.2fg/s,z=%0.2fg/s\r\n",conv_accel_x,conv_accel_y,conv_accel_z);	
+	printf("Gyro convert data is x=%0.2f°/s,y=%0.2f°/s,z=%0.2f°/s\r\n",conv_gyro_x,conv_gyro_y,conv_gyro_z);			
+	#endif			
 }
 
 //设置传感器电源模式
@@ -425,40 +417,6 @@ unsigned char bmi160_user_space(struct bmi160_dev *me)
 	return rslt;	
 }
 
-
-//### ISR
-//``` c
-//int8_t rslt = BMI160_OK;
-//uint16_t step_count = 0;//stores the step counter value
-
-//rslt = bmi160_read_step_counter(&step_count,  &sensor);
-//```
-
-//### Unmapping Interrupt
-//#### Example for unmapping Step Detector Interrupt
-//``` c
-//struct bmi160_int_settg int_config;
-
-///* Deselect the Interrupt channel/pin */
-//int_config.int_channel = BMI160_INT_CHANNEL_NONE;
-///* Select the Interrupt type */
-//int_config.int_type = BMI160_STEP_DETECT_INT;// Choosing Step Detector interrupt
-///* Set the Step Detector interrupt */
-//bmi160_set_int_config(&int_config, &sensor); /* sensor is an instance of the structure bmi160_dev */
-//```
-
-//### Reading interrupt status
-//#### Example for reading interrupt status for step detector
-//``` c
-//union bmi160_int_status interrupt;
-//enum bmi160_int_status_sel int_status_sel;
-
-///* Interrupt status selection to read all interrupts */
-//int_status_sel = BMI160_INT_STATUS_ALL;
-//rslt = bmi160_get_int_status(int_status_sel, &interrupt, &sensor);
-//if (interrupt.bit.step)  printf("Step detector interrupt occured\n");
-//```
-
 /*
 ***BMI160初始化配置
 */
@@ -466,7 +424,6 @@ void bmi160_config_init(void)
 {
 	if(BMI160_OK == bmi160_config_accel_gyro_sensors_in_normal_mode(&sensor_bmi160))
 	{
-
 	}
 }
 
