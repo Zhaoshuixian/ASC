@@ -8,7 +8,6 @@
 
 #define DEBUG_MODE
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

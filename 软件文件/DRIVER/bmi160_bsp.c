@@ -134,20 +134,19 @@ unsigned int avg_filter(unsigned int *sample_buff,unsigned char sample_num)
 	return (sum/sample_num);//先求其和，再求其平均 
 }
 
-#define ACCEL_SWITCH_UNIT(x)  ((float)(x*9.8)/16384)  	// Sensivity S2g ex:(x*9.8)/(0x8000/2)
-#define GYRO_SWITCH_UNIT(x)   ((float)x/16.4)   		// RFS2000 ex: (x*2000)/0x7fff
-
 /*
 ***加速度数据转换
 */
 float accel_data_convert(int16_t raw_data)
 {
 /*
-假如：Sensitivity [16bit] Type_value=16348@2G (1G约9.8g/s2)
-则：  总量程为4G,对应的数字值为2^16 (0~65535,Mid:32767)
-得出灵敏度值为4/2^16=16348LSB/g (Hex 0x10000)
-参考链接：https://blog.csdn.net/ZHONGCAI0901/article/details/110491101?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-11.control&dist_request_id=&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-11.control
-
+	假如：Sensitivity [16bit] Type_value=16348@2G (1G约9.8g/s2)
+	则：  总量程为4G,对应的数字值为2^16 (0~65535,Mid:32767)
+	得出灵敏度值为4/2^16=16348LSB/g (Hex 0x10000)
+	参考链接：https://blog.csdn.net/ZHONGCAI0901/article/details/110491101?utm_medium=distribute.
+	pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-11.
+	control&dist_request_id=&depth_1-utm_source=distribute.
+	pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-11.control
 */
 	/*+2G----------------0-------------------2G*/
 	/*0----------------32767--------------65535*/
@@ -155,9 +154,7 @@ float accel_data_convert(int16_t raw_data)
 	
 	//G-sensor输出值也不是直接的加速度值，它的计量单位是通常用g表示，
 	//1g代表一个重力加速度，即9.8m/s^2。1g=1000mg。
-   raw_data=(float)(raw_data*9.8)/16384;
-	
-	return  raw_data;
+   return  (float)(raw_data*9.8)/16384;
 }
 
 /*
@@ -175,9 +172,8 @@ float gyro_data_convert(int16_t raw_data)
 	/*+2000----------------------------------2000*/
 	/*0----------------32767--------------65535*/
 	/*-------------------END-------------------*/
-	
-	raw_data=(float)raw_data/16.4;  		// RFS2000 ex: (x*2000)/0x7fff
-	return raw_data;
+
+	return (float)raw_data/16.4;
 }
 
 float conv_accel_x=0,conv_accel_y=0,conv_accel_z=0;
@@ -235,27 +231,21 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 	tmp_gyro.x = midval_filter((int *)gyro_sample_buff[0],N) ;//经过滤波
 	tmp_gyro.y = midval_filter((int *)gyro_sample_buff[1],N) ;//经过滤波
 	tmp_gyro.z = midval_filter((int *)gyro_sample_buff[2],N) ;//经过滤波	
-#if 0
-	conv_accel_x =accel_data_convert(accel.x);
-	conv_accel_y =accel_data_convert(accel.y);
-	conv_accel_z =accel_data_convert(accel.z);	
+
+	conv_accel_x =accel_data_convert(tmp_accel.x);
+	conv_accel_y =accel_data_convert(tmp_accel.y);
+	conv_accel_z =accel_data_convert(tmp_accel.z);	
 	
-	conv_gyro_x =gyro_data_convert(gyro.x);
-	conv_gyro_y =gyro_data_convert(gyro.y);
-	conv_gyro_z =gyro_data_convert(gyro.z);	
-#else
-	conv_accel_x =ACCEL_SWITCH_UNIT(tmp_accel.x);
-	conv_accel_y =ACCEL_SWITCH_UNIT(tmp_accel.y);
-	conv_accel_z =ACCEL_SWITCH_UNIT(tmp_accel.z);	
-	
-	conv_gyro_x =GYRO_SWITCH_UNIT(tmp_gyro.x);
-	conv_gyro_y =GYRO_SWITCH_UNIT(tmp_gyro.y);
-	conv_gyro_z =GYRO_SWITCH_UNIT(tmp_gyro.z);	
-#endif
+	conv_gyro_x =gyro_data_convert(tmp_gyro.x);
+	conv_gyro_y =gyro_data_convert(tmp_gyro.y);
+	conv_gyro_z =gyro_data_convert(tmp_gyro.z);
+
 	#ifdef DEBUG_MODE	
 	printf("Accel convert data is x=%0.2fg/s,y=%0.2fg/s,z=%0.2fg/s\r\n",conv_accel_x,conv_accel_y,conv_accel_z);	
 	printf("Gyro convert data is x=%0.2f°/s,y=%0.2f°/s,z=%0.2f°/s\r\n",conv_gyro_x,conv_gyro_y,conv_gyro_z);			
-	#endif			
+	#endif	
+
+			
 }
 
 //设置传感器电源模式

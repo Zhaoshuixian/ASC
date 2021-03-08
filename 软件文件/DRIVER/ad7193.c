@@ -626,42 +626,42 @@ void device_ad7193_handle(void)
     {
         case AD7193_CH_0:
             #ifdef DEBUG_MODE
-            printf("CH0...\r\n");
+            printf("> SCAN TO CH0 !\r\n");
             #endif
             ch[0].raw_data= ad7193_continuous_readavg(10);//连续转换
             ch[0].volt= ad7193_convert_to_volts(ch[0].raw_data,5.0);				
         break;
         case AD7193_CH_1:
             #ifdef DEBUG_MODE
-            printf("CH1...\r\n");
+            printf("> SCAN TO CH1 !\r\n");
             #endif
             ch[1].raw_data = ad7193_continuous_readavg(10);	
             ch[1].volt = ad7193_convert_to_volts(ch[1].raw_data,5.0);				
         break;
         case AD7193_CH_2:
             #ifdef DEBUG_MODE
-            printf("CH2...\r\n");
+            printf("> SCAN TO CH2 !\r\n");
             #endif
             ch[2].raw_data = ad7193_continuous_readavg(10);
             ch[2].volt = ad7193_convert_to_volts(ch[2].raw_data,5.0);				
         break;
         case AD7193_CH_3:
             #ifdef DEBUG_MODE
-            printf("CH3...\r\n");
+            printf("> SCAN TO CH3 !\r\n");
             #endif
             ch[3].raw_data = ad7193_continuous_readavg(10);
             ch[3].volt = ad7193_convert_to_volts(ch[3].raw_data,5.0);		
         break;   
         case AD7193_CH_TEMP:
             #ifdef DEBUG_MODE    
-            printf("CHTEMP...\r\n");
+            printf("> SCAN TO CHTEMP !\r\n");
             #endif    
             ch[4].raw_data = ad7193_continuous_readavg(10);//连续转换
             ch[4].volt = ad7193_temperature_read(ch[4].raw_data);
         break; 
         default:  
             #ifdef DEBUG_MODE     
-            printf("UNKOWN %d...\r\n",status_reg_val);	
+            printf("> UNKOWN %d !r\n",status_reg_val);	
             #endif			
         break; 		
     }
@@ -673,7 +673,7 @@ void device_ad7193_handle(void)
             {
                 ch_tmp[i].volt=ch[i].volt;
                 #ifdef DEBUG_MODE 
-                printf("CH%d Volts is %fV...\r\n",i,ch_tmp[i].volt);	
+                printf("CH%d Volts is %.2fV...\r\n",i,ch_tmp[i].volt);	
                 #endif      	 
             }    
         }
@@ -681,7 +681,7 @@ void device_ad7193_handle(void)
         {
             ch_tmp[4].volt=ch[4].volt;
             #ifdef DEBUG_MODE      
-            printf("Current Chip temperature is %fC...\r\n",ch_tmp[4].volt);
+            printf("Chip Temperature is %.2f℃...\r\n",ch_tmp[4].volt);
             #endif         
         }   
     #endif
