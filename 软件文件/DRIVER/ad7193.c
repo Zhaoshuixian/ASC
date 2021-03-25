@@ -27,7 +27,7 @@
 
 unsigned char currentPolarity = 0;
 unsigned char currentGain     = 1;
-unsigned int tmp_RegValue=0; 
+unsigned int tmp_RegValue=0;
 /***************************************************************************//**
  * @brief Checks if the AD7139 part is present.
  *
@@ -43,12 +43,14 @@ unsigned char ad7193_init(void)
     HAL_Delay(1);//上电自动复位后，延时>=500us
 
     regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取配置寄存器值
-    tmp_RegValue=regVal;
+
     if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//判断IC是否挂载
-	
+    #ifdef DEBUG_MODE 
+    AD7193_LOG("CHIP ID:%#X...\r\n",regVal);
+    #endif  	
     ad7193_reset(); //// Resets the device.
-	  HAL_Delay(1);	// >500us 
-	
+    HAL_Delay(1);	// >500us 
+
     return status;
 }
 
@@ -222,14 +224,37 @@ void ad7193_channel_select(unsigned short channel)
 #else
     PMOD1_CS_LOW; //使能SPI	
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 0);//读取配置寄存器值
-    tmp_RegValue=oldRegValue;
     oldRegValue &= ~(AD7193_CONF_CHAN(0x3FF));                   //清除通道配置位数据
     newRegValue = oldRegValue | AD7193_CONF_CHAN(1 << channel);    //设置新值 
-    tmp_RegValue=oldRegValue;	
     ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0); //将新值重新写入寄存器
     PMOD1_CS_HIGH;	
 #endif
 }
+
+/*
+***清除所有的通道选择
+*/
+void ad7193_channel_clear(void)
+{
+    unsigned int oldRegValue = 0x0;
+    unsigned int newRegValue = 0x0;   
+
+    PMOD1_CS_LOW; //使能SPI	
+    oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 0);//读取模式寄存器数据
+    oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
+	  newRegValue = oldRegValue ;             //设置新值 
+    ad7193_set_register_value(AD7193_REG_MODE, newRegValue, 3, 0); //将新值重新写入寄存器
+	
+    oldRegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 0);//读取配置寄存器值
+    oldRegValue &= ~(AD7193_CONF_CHAN(0x3FF));                   //清除通道配置位数据
+    newRegValue = oldRegValue;    //设置缺省值 	
+    ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0); //将新值重新写入寄存器
+    PMOD1_CS_HIGH;	
+	
+//    tmp_RegValue =newRegValue;
+//    AD7193_LOG("CONFIG REG:%#X...\r\n",tmp_RegValue);	
+}
+
 
 /***************************************************************************//**
  * @brief Performs the given calibration to the specified channel.
@@ -247,7 +272,6 @@ void ad7193_calibrate(unsigned char mode, unsigned short channel)
     ad7193_channel_select(channel);                                //选择通道
 #if 0  
     oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 1);//读取模式寄存器数据
-		tmp_RegValue=oldRegValue;
     oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
     newRegValue = oldRegValue | AD7193_MODE_SEL(mode);             //设置新值 
 	
@@ -258,7 +282,6 @@ void ad7193_calibrate(unsigned char mode, unsigned short channel)
 #else
     PMOD1_CS_LOW; //使能SPI	
     oldRegValue = ad7193_get_register_value(AD7193_REG_MODE, 3, 0);//读取模式寄存器数据
-	  tmp_RegValue=oldRegValue;
     oldRegValue &= ~AD7193_MODE_SEL(0x7);                          //清除模式选择位数据
     newRegValue = oldRegValue | AD7193_MODE_SEL(mode);             //设置新值 
     ad7193_set_register_value(AD7193_REG_MODE, newRegValue, 3, 0); //将新值重新写入寄存器
@@ -286,21 +309,19 @@ void ad7193_range_setup(unsigned char polarity, unsigned char range)
 
 #if 0
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 1);//先读取配置寄存器的值
-	  tmp_RegValue= oldRegValue;
+
     oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
 	
     newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
     ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1);//写入配置寄存器内
-	  tmp_RegValue= newRegValue;
 #else
 		PMOD1_CS_LOW; //使能SPI
     oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 0);//先读取配置寄存器的值
-	  tmp_RegValue= oldRegValue;
+
     oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
 	
     newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
     ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0);//写入配置寄存器内
-	  tmp_RegValue= newRegValue;
 	  PMOD1_CS_HIGH;
 
 #endif	
@@ -315,24 +336,19 @@ void ad7193_range_setup1( unsigned short channel,unsigned char polarity, unsigne
 
     #if 0
         oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 1);//先读取配置寄存器的值
-        tmp_RegValue= oldRegValue;
         oldRegValue &= ~(AD7193_CONF_UNIPOLAR |AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据
-
         newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range); //再重新配置寄存器的值
         ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 1);//写入配置寄存器内
-        tmp_RegValue= newRegValue;
     #else
         PMOD1_CS_LOW; //使能SPI
         oldRegValue = ad7193_get_register_value(AD7193_REG_CONF,3, 0);//先读取配置寄存器的值
-        tmp_RegValue= oldRegValue;
         #if 0
-			oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7)|AD7193_CONF_CHAN(0x3FF));//清除极性位和增益设置位数据,清除通道配置位数据
+        oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7)|AD7193_CONF_CHAN(0x3FF));//清除极性位和增益设置位数据,清除通道配置位数据
         #else
-			oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据,清除通道配置位数据
+        oldRegValue &= ~(AD7193_CONF_UNIPOLAR|AD7193_CONF_GAIN(0x7));//清除极性位和增益设置位数据,清除通道配置位数据
         #endif
         newRegValue = oldRegValue|(polarity * AD7193_CONF_UNIPOLAR)|AD7193_CONF_GAIN(range)|AD7193_CONF_CHAN(1<<channel); //再重新配置寄存器的值
         ad7193_set_register_value(AD7193_REG_CONF, newRegValue, 3, 0);//写入配置寄存器内
-        tmp_RegValue= newRegValue;
         PMOD1_CS_HIGH;
     #endif	
         currentPolarity = polarity;//记录当前设置的极性
@@ -448,27 +464,6 @@ unsigned int ad7193_continuous_readavg(unsigned char sampleNumber)
  * @return temperature - Celsius degrees.
 *******************************************************************************/
 
-float ad7193_temperature_read1(void)
-{
-    unsigned int dataReg     = 0;
-    float temperature = 0;    
- /*
-    理论上，使用温度传感器并选择双极性模式时，如果温度为0 K(开尔文)，器件应返回0x800000码。
-    为使传感器发挥最佳性能，需要执行单点校准。因此，应记录25°C时的转换结果并计算灵敏度。
-    灵敏度约为2815码/°C。温度传感器的计算公式为：
-    -- 温度 (K) = (转换结果 − 0x800000)/2815K 
-    -- 温度(°C) = 温度(K) − 273
-    单点校准之后，内部温度传感器的精度典型值为±2℃。
- */  
-    dataReg = ad7193_single_conversion();//执行单次转换
-	
-    dataReg -=0x800000;
-    temperature = (float)dataReg / 2815;    // 开氏温度
-    temperature -= 273;  // 摄氏温度
-    
-    return temperature;
-}
-
 float ad7193_temperature_read(unsigned int dataReg)
 {
 
@@ -538,36 +533,33 @@ void ad7193_bpdsw_set(void)
 */
 void ad7193_config_init(void)
 {
-#if 0
-	//通道零点和量程进行预校准
-   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
-   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
 
-   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
-   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
+    //通道零点和量程进行预校准
+    ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_0);
+    ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_0);
 
-   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
-   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2); 
+    ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_1);
+    ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_1);
 
-   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
-   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+    ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_2);
+    ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_2); 
+
+    ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_3);
+    ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_3); 
+
+    ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_TEMP);
+    ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_TEMP); 
+
+    //清除通道配置数据	
+    ad7193_channel_clear();
+
+    //选择通道0| 双极性 |增益设置0	
+    ad7193_range_setup1(AD7193_CH_0,   0, AD7193_CONF_GAIN_1);
+    ad7193_range_setup1(AD7193_CH_1,   0, AD7193_CONF_GAIN_1);	
+    ad7193_range_setup1(AD7193_CH_2,   0, AD7193_CONF_GAIN_1);	
+    ad7193_range_setup1(AD7193_CH_3,   0, AD7193_CONF_GAIN_1);
+    ad7193_range_setup1(AD7193_CH_TEMP,0, AD7193_CONF_GAIN_1);
 	
-   ad7193_calibrate(AD7193_MODE_CAL_INT_ZERO, AD7193_CH_TEMP);
-   ad7193_calibrate(AD7193_MODE_CAL_INT_FULL, AD7193_CH_TEMP); 	
-  //温度是双极性配置 
-	ad7193_range_setup(0, AD7193_CONF_GAIN_1);/* Select Bipolar operation and ADC's input range to +-2.5V. */	
-	ad7193_channel_select(AD7193_CH_0);/* Select channel AIN1(+) - AIN2(-). */
-	ad7193_channel_select(AD7193_CH_1);/* Select channel AIN3(+) - AIN4(-) */
-	ad7193_channel_select(AD7193_CH_2);/* Select channel AIN5(+) - AIN6(-) */	
-	ad7193_channel_select(AD7193_CH_3);/* Select channel AIN7(+) - AIN8(-) */	
-	ad7193_channel_select(AD7193_CH_TEMP);     //选择 温度 通道	
-#else
-	ad7193_range_setup1(AD7193_CH_0,   0, AD7193_CONF_GAIN_1);//	
-	ad7193_range_setup1(AD7193_CH_1,   0, AD7193_CONF_GAIN_1);//	
-	ad7193_range_setup1(AD7193_CH_2,   0, AD7193_CONF_GAIN_1);//	
-	ad7193_range_setup1(AD7193_CH_3,   0, AD7193_CONF_GAIN_1);//
-	ad7193_range_setup1(AD7193_CH_TEMP,0, AD7193_CONF_GAIN_1);//
-#endif	
 #if 0
 	unsigned int command        = 0;
 	#if USE_EXT_CLOCK
@@ -583,13 +575,13 @@ void ad7193_config_init(void)
     ad7193_bpdsw_set();
 #ifdef DEBUG_MODE	
     tmp_RegValue = ad7193_get_register_value(AD7193_REG_MODE,3,1);//读模式寄存器
-    printf("Mode_RegValue is %#X...\r\n",tmp_RegValue);		        //0X80060
+    AD7193_LOG("MODE REG:%#X...\r\n",tmp_RegValue);		        //0X80060
     tmp_RegValue = ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
-    printf("Status_RegValue is %#X...\r\n",tmp_RegValue);	        //0x80
+    AD7193_LOG("STATUS REG:%#X...\r\n",tmp_RegValue);	        //0x80
     tmp_RegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//读配置寄存器		
-    printf("Config_RegValue is %#X...\r\n",tmp_RegValue);	        //0X10010
+    AD7193_LOG("CONFIG REG:%#X...\r\n",tmp_RegValue);	        //0X10010
     tmp_RegValue = ad7193_get_register_value(AD7193_REG_GPOCON, 3, 1);//读	
-    printf("Gpocon_RegValue is %#X...\r\n",tmp_RegValue);	        //	
+    AD7193_LOG("GPOCON REG:%#X...\r\n",tmp_RegValue);	        //	
 #endif
 }
 
@@ -626,42 +618,42 @@ void device_ad7193_handle(void)
     {
         case AD7193_CH_0:
             #ifdef DEBUG_MODE
-            printf("> SCAN TO CH0 !\r\n");
+            AD7193_LOG("SCAN TO CH0 !\r\n");
             #endif
             ch[0].raw_data= ad7193_continuous_readavg(10);//连续转换
             ch[0].volt= ad7193_convert_to_volts(ch[0].raw_data,5.0);				
         break;
         case AD7193_CH_1:
             #ifdef DEBUG_MODE
-            printf("> SCAN TO CH1 !\r\n");
+            AD7193_LOG("SCAN TO CH1 !\r\n");
             #endif
             ch[1].raw_data = ad7193_continuous_readavg(10);	
             ch[1].volt = ad7193_convert_to_volts(ch[1].raw_data,5.0);				
         break;
         case AD7193_CH_2:
             #ifdef DEBUG_MODE
-            printf("> SCAN TO CH2 !\r\n");
+            AD7193_LOG("SCAN TO CH2 !\r\n");
             #endif
             ch[2].raw_data = ad7193_continuous_readavg(10);
             ch[2].volt = ad7193_convert_to_volts(ch[2].raw_data,5.0);				
         break;
         case AD7193_CH_3:
             #ifdef DEBUG_MODE
-            printf("> SCAN TO CH3 !\r\n");
+            AD7193_LOG("SCAN TO CH3 !\r\n");
             #endif
             ch[3].raw_data = ad7193_continuous_readavg(10);
             ch[3].volt = ad7193_convert_to_volts(ch[3].raw_data,5.0);		
         break;   
         case AD7193_CH_TEMP:
             #ifdef DEBUG_MODE    
-            printf("> SCAN TO CHTEMP !\r\n");
+            AD7193_LOG("SCAN TO CHTEMP !\r\n");
             #endif    
             ch[4].raw_data = ad7193_continuous_readavg(10);//连续转换
             ch[4].volt = ad7193_temperature_read(ch[4].raw_data);
         break; 
         default:  
             #ifdef DEBUG_MODE     
-            printf("> UNKOWN %d !r\n",status_reg_val);	
+			AD7193_LOG("Unkown Value:%d !r\n",status_reg_val);	
             #endif			
         break; 		
     }
@@ -673,7 +665,7 @@ void device_ad7193_handle(void)
             {
                 ch_tmp[i].volt=ch[i].volt;
                 #ifdef DEBUG_MODE 
-                printf("CH%d Volts is %.2fV...\r\n",i,ch_tmp[i].volt);	
+                AD7193_LOG("CH%d Volts:%.2fV...\r\n",i,ch_tmp[i].volt);	
                 #endif      	 
             }    
         }
@@ -681,7 +673,7 @@ void device_ad7193_handle(void)
         {
             ch_tmp[4].volt=ch[4].volt;
             #ifdef DEBUG_MODE      
-            printf("Chip Temperature is %.2f℃...\r\n",ch_tmp[4].volt);
+            AD7193_LOG("CHIP TEMPER:%.2f℃...\r\n",ch_tmp[4].volt);
             #endif         
         }   
     #endif

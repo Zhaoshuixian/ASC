@@ -336,7 +336,7 @@ static void SystemPower_Config(void)
 int main(void)
 {
   HAL_Init();
-	__TODO:	
+	__TODO:	    	
   SystemClock_Config();
   SystemPower_Config(); 
   MX_GPIO_Init();
@@ -346,25 +346,28 @@ int main(void)
   MX_SPI3_Init();  //for AD7193
   MX_USART1_UART_Init();   
   MX_USART2_UART_Init();	
+	#ifdef DEBUG_MODE    
+	printf("\r\n> System Startup...\r\n\r\n");
+	#endif	
 	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 	{
-    #ifdef DEBUG_MODE    
-    printf(">> BMI160 Init failed...\r\n");
-    #endif          
-    while(1) //失败进入阻塞提示
-    {
-      HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-      HAL_Delay(150);//LED闪烁指示
-    }
+		#ifdef DEBUG_MODE    
+		BMI160_LOG("Init failed...\r\n");
+		#endif          
+		while(1) //失败进入阻塞提示
+		{ 
+			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+			HAL_Delay(150);//LED闪烁指示
+		}
 	}	
   #ifdef DEBUG_MODE 
-  printf(">> BMI160 Chip ID is %#X...\r\n",sensor_bmi160.chip_id);
+  BMI160_LOG("CHIP ID:%#X...\r\n",sensor_bmi160.chip_id);
   #endif    
 	bmi160_config_init();
 	if(DEVICE_INIT_OK!=ad7193_init())//设备初始化失败
 	{
     #ifdef DEBUG_MODE
-		printf(">> AD7193 Init failed...\r\n");	
+		AD7193_LOG("Init failed...\r\n");	
     #endif	
 		while(1) //失败进入阻塞提示
 		{

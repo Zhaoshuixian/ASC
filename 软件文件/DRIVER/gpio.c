@@ -22,21 +22,21 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin  = NC_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(NC_1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 	
   /*Configure GPIO pin : NC_2_Pin */
   GPIO_InitStruct.Pin  = NC_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(NC_2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : KEI_SIN_Pin */
   GPIO_InitStruct.Pin  = KEY_SIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(KEY_SIN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 	
-  /*Configure GPIO pins : J1_1_Pin /J1_2_Pin /J1_4_Pin /J1_5_Pin */
+  /*Configure GPIO pins : J1_1_Pin /J1_2_Pin /J1_3_Pin */
   GPIO_InitStruct.Pin   = J1_1_Pin|J1_2_Pin|J1_3_Pin;
   GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull  = GPIO_NOPULL;
@@ -68,7 +68,7 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin  = EXT_TRIG_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(EXT_TRIG_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   //外部中断线配置
   HAL_NVIC_SetPriority(EXTI0_IRQn,0,0);//EXT_TRIG
@@ -94,11 +94,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   //判断进入中断的GPIOs
   if(EXT_TRIG_Pin == GPIO_Pin)//外部触发引脚
   {
-    //SleepMode_Enter_Flag=0;//退出SLEEP MODE 
+
   }
   else if(KEY_SIN_Pin == GPIO_Pin)//按键引脚
   {
-    //SleepMode_Enter_Flag=0;//退出SLEEP MODE 
+
   }
 }
 

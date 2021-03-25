@@ -57,7 +57,7 @@ unsigned char sem_wait(sem_st *const sem_me,unsigned int timeout)
 {
 	sem_me->timeout=timeout;//重载等待时间
 	
-  if(0==sem_me->timeout) //0等待 
+    if(0==sem_me->timeout) //0等待 
 	{
 		if(sem_me->value)
 		{

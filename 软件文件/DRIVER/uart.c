@@ -111,8 +111,8 @@ static void uart_rx_task(UART_HandleTypeDef *huart)
       uart1.rx_frame_flag=0;
       uart1.rx_len=uart_dma_recvlen(&huart1);
 			#ifdef DEBUG_MODE
-      printf(">>UART1 Received size is:%d\r\n",uart1.rx_len);
-      printf(">>UART1 Received data is:%s\r\n",uart1.rx_buff);
+      UART1_LOG("Recv size:%d\r\n",uart1.rx_len);
+      UART1_LOG("Recv data:%s\r\n",uart1.rx_buff);
 			#endif			
       uart_dma_reset(&huart1);
       memset(uart1.rx_buff,0,sizeof(uart1.rx_buff));  
@@ -125,8 +125,8 @@ static void uart_rx_task(UART_HandleTypeDef *huart)
       uart2.rx_frame_flag=0;      
       uart2.rx_len=uart_dma_recvlen(&huart1);
 			#ifdef DEBUG_MODE
-      printf(">> UART2 Received size is:%d\r\n",uart2.rx_len);
-      printf(">> UART2 Received data is:%s\r\n",uart2.rx_buff);
+      UART2_LOG("Recv size:%d\r\n",uart2.rx_len);
+      UART2_LOG("Recv data:%s\r\n",uart2.rx_buff);
 			#endif
       uart_dma_reset(&huart2);
       memset(uart2.rx_buff,0,sizeof(uart2.rx_buff));     
@@ -141,6 +141,14 @@ void device_uart_handle(void)
 {
   uart_rx_task(&huart1);
   uart_rx_task(&huart2);
+}
+
+/*
+***串口数据发送
+*/
+void uart_tx_data(UART_HandleTypeDef *huart,unsigned char *tdata,unsigned int tzise)
+{
+  HAL_UART_Transmit(huart, (uint8_t *)&tdata, tzise, 0xffff);
 }
 
 /**

@@ -438,6 +438,11 @@
               <FileType>1</FileType>
               <FilePath>.\DRIVER\os.c</FilePath>
             </File>
+            <File>
+              <FileName>flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\flash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -514,6 +519,12 @@
         </targetInfos>
       </component>
       <component Cclass="Device" Cgroup="STM32Cube HAL" Csub="EXTI" Cvendor="Keil" Cversion="1.12.0" condition="STM32L4 HAL">
+        <package name="STM32L4xx_DFP" schemaVersion="1.6.0" url="https://www.keil.com/pack/" vendor="Keil" version="2.5.0"/>
+        <targetInfos>
+          <targetInfo name="ACS"/>
+        </targetInfos>
+      </component>
+      <component Cclass="Device" Cgroup="STM32Cube HAL" Csub="Flash" Cvendor="Keil" Cversion="1.12.0" condition="STM32L4 HAL">
         <package name="STM32L4xx_DFP" schemaVersion="1.6.0" url="https://www.keil.com/pack/" vendor="Keil" version="2.5.0"/>
         <targetInfos>
           <targetInfo name="ACS"/>

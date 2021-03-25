@@ -213,8 +213,8 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 	{
 		/* To read both Accel and Gyro data along with time*///同时读取
 		bmi160_get_sensor_data((BMI160_ACCEL_SEL | BMI160_GYRO_SEL | BMI160_TIME_SEL), &accel, &gyro, me);	
-//	printf("Accel raw data is x=%d,y=%d,z=%d\r\n",accel.x,accel.y,accel.z);	
-//	printf("Gyro raw data is  x=%d,y=%d,z=%d\r\n",gyro.x, gyro.y, gyro.z);
+//	BMI160_LOG("Accel raw data:x=%d,y=%d,z=%d\r\n",accel.x,accel.y,accel.z);	
+//	BMI160_LOG("Gyro raw data:x=%d,y=%d,z=%d\r\n",gyro.x, gyro.y, gyro.z);
 		accel_sample_buff[0][i] = accel.x;
 		accel_sample_buff[1][i] = accel.y;	
 		accel_sample_buff[2][i] = accel.z;	
@@ -241,8 +241,8 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 	conv_gyro_z =gyro_data_convert(tmp_gyro.z);
 
 	#ifdef DEBUG_MODE	
-	printf("Accel convert data is x=%0.2fg/s,y=%0.2fg/s,z=%0.2fg/s\r\n",conv_accel_x,conv_accel_y,conv_accel_z);	
-	printf("Gyro convert data is x=%0.2f°/s,y=%0.2f°/s,z=%0.2f°/s\r\n",conv_gyro_x,conv_gyro_y,conv_gyro_z);			
+	BMI160_LOG("Accel convert data:x=%0.2fg/s,y=%0.2fg/s,z=%0.2fg/s\r\n",conv_accel_x,conv_accel_y,conv_accel_z);	
+	BMI160_LOG("Gyro convert data:x=%0.2f°/s,y=%0.2f°/s,z=%0.2f°/s\r\n",conv_gyro_x,conv_gyro_y,conv_gyro_z);			
 	#endif	
 
 			

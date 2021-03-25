@@ -2,6 +2,8 @@
 
 #include "misc.h"
 
+
+
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None

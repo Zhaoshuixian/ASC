@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define UART_BUFF_SIZE  (255) //串口1接收最大缓存字节数
+#define UART_BUFF_SIZE  (512) //串口1接收最大缓存字节数
 typedef struct 
 {
   unsigned char rx_buff[UART_BUFF_SIZE];//接收缓存区 
@@ -21,7 +21,7 @@ extern uart_st uart1,uart2;
 void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
 void MX_DMA_Init(void);
-
+void device_uart_handle(void);
 void device_uart_handle(void);
 
 

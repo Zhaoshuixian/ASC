@@ -6,7 +6,14 @@
 #include "stm32l4xx_hal.h"
 
 
+
 #define DEBUG_MODE
+
+#define LOG(format,...)  printf(format,##__VA_ARGS__) 
+#define UART1_LOG(...)   LOG("[UART1]"##__VA_ARGS__) 
+#define UART2_LOG(...)   LOG("[UART2]"##__VA_ARGS__) 
+#define BMI160_LOG(...)  LOG("[BMI160]"##__VA_ARGS__) 
+#define AD7193_LOG(...)  LOG("[AD7193]"##__VA_ARGS__) 
 
 #ifdef __cplusplus
 extern "C" {
