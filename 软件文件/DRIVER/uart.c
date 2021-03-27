@@ -10,7 +10,6 @@ DMA_HandleTypeDef  hdma_usart2_rx;//usart2_dma
 
 uart_st uart1,uart2;
 
-
 /**
   * @brief USART1 Initialization Function
   * @param None
@@ -110,7 +109,7 @@ static void uart_rx_task(UART_HandleTypeDef *huart)
     {
       uart1.rx_frame_flag=0;
       uart1.rx_len=uart_dma_recvlen(&huart1);
-			#ifdef DEBUG_MODE
+			#ifdef DEBUG_UART1
       UART1_LOG("Recv size:%d\r\n",uart1.rx_len);
       UART1_LOG("Recv data:%s\r\n",uart1.rx_buff);
 			#endif			
@@ -124,7 +123,7 @@ static void uart_rx_task(UART_HandleTypeDef *huart)
     {
       uart2.rx_frame_flag=0;      
       uart2.rx_len=uart_dma_recvlen(&huart1);
-			#ifdef DEBUG_MODE
+			#ifdef DEBUG_UART2
       UART2_LOG("Recv size:%d\r\n",uart2.rx_len);
       UART2_LOG("Recv data:%s\r\n",uart2.rx_buff);
 			#endif

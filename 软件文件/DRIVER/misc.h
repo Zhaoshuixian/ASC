@@ -5,16 +5,23 @@
 
 #include "stm32l4xx_hal.h"
 
+//#define DEBUG_FLASH_EXAMPLE //写FLASH示例
+#define DEBUG_SYSTEM        //SYSTEM调试信息打印输出
+//#define DEBUG_BMI160      //BMI160调试信息打印输出
+//#define DEBUG_AD7193        //AD7193调试信息打印输出
+//#define DEBUG_FLASH         //FLASH 调试信息打印输出
+//#define DEBUG_UART1       //UART1调试信息打印输出
+//#define DEBUG_UART2       //UART2调试信息打印输出
 
-
-#define DEBUG_MODE
 
 #define LOG(format,...)  printf(format,##__VA_ARGS__) 
+#define SYSTEM_LOG(...)  LOG("[SYSTEM]"##__VA_ARGS__) 
 #define UART1_LOG(...)   LOG("[UART1]"##__VA_ARGS__) 
 #define UART2_LOG(...)   LOG("[UART2]"##__VA_ARGS__) 
 #define BMI160_LOG(...)  LOG("[BMI160]"##__VA_ARGS__) 
 #define AD7193_LOG(...)  LOG("[AD7193]"##__VA_ARGS__) 
-
+#define EEPROM_LOG(...)  LOG("[EEPROM]"##__VA_ARGS__)
+#define FLASH_LOG(...)   LOG("[FLASH]"##__VA_ARGS__) 
 #ifdef __cplusplus
 extern "C" {
 #endif

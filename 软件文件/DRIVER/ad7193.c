@@ -45,7 +45,7 @@ unsigned char ad7193_init(void)
     regVal = ad7193_get_register_value(AD7193_REG_ID, 1, 1);//读取配置寄存器值
 
     if((regVal & AD7193_ID_MASK) != ID_AD7193)  status = 1;//判断IC是否挂载
-    #ifdef DEBUG_MODE 
+    #ifdef DEBUG_AD7193 
     AD7193_LOG("CHIP ID:%#X...\r\n",regVal);
     #endif  	
     ad7193_reset(); //// Resets the device.
@@ -573,7 +573,7 @@ void ad7193_config_init(void)
 	printf("Command is %#X...\r\n",command);		
 #endif	
     ad7193_bpdsw_set();
-#ifdef DEBUG_MODE	
+#ifdef DEBUG_AD7193	
     tmp_RegValue = ad7193_get_register_value(AD7193_REG_MODE,3,1);//读模式寄存器
     AD7193_LOG("MODE REG:%#X...\r\n",tmp_RegValue);		        //0X80060
     tmp_RegValue = ad7193_get_register_value(AD7193_REG_STAT,1,1);//读状态寄存器
@@ -617,54 +617,54 @@ void device_ad7193_handle(void)
     switch(status_reg_val)//当前数据所在通道的指示
     {
         case AD7193_CH_0:
-            #ifdef DEBUG_MODE
+            #ifdef DEBUG_AD7193
             AD7193_LOG("SCAN TO CH0 !\r\n");
             #endif
             ch[0].raw_data= ad7193_continuous_readavg(10);//连续转换
             ch[0].volt= ad7193_convert_to_volts(ch[0].raw_data,5.0);				
         break;
         case AD7193_CH_1:
-            #ifdef DEBUG_MODE
+            #ifdef DEBUG_AD7193
             AD7193_LOG("SCAN TO CH1 !\r\n");
             #endif
             ch[1].raw_data = ad7193_continuous_readavg(10);	
             ch[1].volt = ad7193_convert_to_volts(ch[1].raw_data,5.0);				
         break;
         case AD7193_CH_2:
-            #ifdef DEBUG_MODE
+            #ifdef DEBUG_AD7193
             AD7193_LOG("SCAN TO CH2 !\r\n");
             #endif
             ch[2].raw_data = ad7193_continuous_readavg(10);
             ch[2].volt = ad7193_convert_to_volts(ch[2].raw_data,5.0);				
         break;
         case AD7193_CH_3:
-            #ifdef DEBUG_MODE
+            #ifdef DEBUG_AD7193
             AD7193_LOG("SCAN TO CH3 !\r\n");
             #endif
             ch[3].raw_data = ad7193_continuous_readavg(10);
             ch[3].volt = ad7193_convert_to_volts(ch[3].raw_data,5.0);		
         break;   
         case AD7193_CH_TEMP:
-            #ifdef DEBUG_MODE    
+            #ifdef DEBUG_AD7193    
             AD7193_LOG("SCAN TO CHTEMP !\r\n");
             #endif    
             ch[4].raw_data = ad7193_continuous_readavg(10);//连续转换
             ch[4].volt = ad7193_temperature_read(ch[4].raw_data);
         break; 
         default:  
-            #ifdef DEBUG_MODE     
+            #ifdef DEBUG_AD7193     
 			AD7193_LOG("Unkown Value:%d !r\n",status_reg_val);	
             #endif			
         break; 		
     }
-    #ifdef DEBUG_MODE
+    #ifdef DEBUG_AD7193
         static ch_st ch_tmp[5];
         for(unsigned char i=0;i< 4;i++)
         {
             if(ch_tmp[i].volt!=ch[i].volt)
             {
                 ch_tmp[i].volt=ch[i].volt;
-                #ifdef DEBUG_MODE 
+                #ifdef DEBUG_AD7193 
                 AD7193_LOG("CH%d Volts:%.2fV...\r\n",i,ch_tmp[i].volt);	
                 #endif      	 
             }    
@@ -672,7 +672,7 @@ void device_ad7193_handle(void)
         if(ch_tmp[4].volt!=ch[4].volt)
         {
             ch_tmp[4].volt=ch[4].volt;
-            #ifdef DEBUG_MODE      
+            #ifdef DEBUG_AD7193      
             AD7193_LOG("CHIP TEMPER:%.2f℃...\r\n",ch_tmp[4].volt);
             #endif         
         }   

@@ -240,7 +240,7 @@ void bmi160_read_sensor_data(struct bmi160_dev *me)
 	conv_gyro_y =gyro_data_convert(tmp_gyro.y);
 	conv_gyro_z =gyro_data_convert(tmp_gyro.z);
 
-	#ifdef DEBUG_MODE	
+	#ifdef DEBUG_BMI160	
 	BMI160_LOG("Accel convert data:x=%0.2fg/s,y=%0.2fg/s,z=%0.2fg/s\r\n",conv_accel_x,conv_accel_y,conv_accel_z);	
 	BMI160_LOG("Gyro convert data:x=%0.2f°/s,y=%0.2f°/s,z=%0.2f°/s\r\n",conv_gyro_x,conv_gyro_y,conv_gyro_z);			
 	#endif	

@@ -4,6 +4,7 @@
         "ad7193.h": "c",
         "main.h": "c",
         "os.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "uart.h": "c"
     }
 }

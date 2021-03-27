@@ -2,7 +2,7 @@
 /*
 	Project: Anchor Cable Sensor (STM32L432 + MDK)
 	Create Data: 2021/02/02
-	Modify Data: 2021/03/04
+	Modify Data: 2021/03/27
 	Author By:   Zhao Shuixian
   Brief：
   1. 实现多任务调度功能
@@ -13,6 +13,7 @@
   6. 实现BMI160数据读取
   7. 实现RTC定时休眠唤醒
 	8. 实现UART_DMA接收（BUG:首上电产生IDLE中断）
+	9. 实现片上FLASH存储操作
 */
 
 #include "misc.h"
@@ -24,6 +25,7 @@
 #include "i2c.h"
 #include "wtd.h"
 #include "os.h"
+#include "flash.h"
 
 /*外设定义*/
 RTC_HandleTypeDef  hrtc;  //rtc
@@ -270,7 +272,7 @@ void SystemClock_Config(void)
 	7 WS (8 CPU cycles)                  168 <HCLK ≤ 180   154 < HCLK ≤ 176   140 < HCLK ≤ 160
 	8 WS (9 CPU cycles)                                    176 < HCLK ≤ 180   160 < HCLK ≤ 168	
 	*/	
-  if(HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) Error_Handler();
+  if(HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK) Error_Handler();
 
   // 需要初始化的外设时钟:USART1/USART2/I2C1/RTC
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_RTC;
@@ -329,10 +331,12 @@ static void SystemPower_Config(void)
   if(HAL_RTC_Init(&hrtc) != HAL_OK) Error_Handler(); 
 }
 
+
 /**
   * @brief  The application entry point.
   * @retval int
   */
+
 int main(void)
 {
   HAL_Init();
@@ -351,7 +355,7 @@ int main(void)
 	#endif	
 	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 	{
-		#ifdef DEBUG_MODE    
+		#ifdef DEBUG_BMI160    
 		BMI160_LOG("Init failed...\r\n");
 		#endif          
 		while(1) //失败进入阻塞提示
@@ -360,13 +364,13 @@ int main(void)
 			HAL_Delay(150);//LED闪烁指示
 		}
 	}	
-  #ifdef DEBUG_MODE 
+  #ifdef DEBUG_BMI160 
   BMI160_LOG("CHIP ID:%#X...\r\n",sensor_bmi160.chip_id);
   #endif    
 	bmi160_config_init();
 	if(DEVICE_INIT_OK!=ad7193_init())//设备初始化失败
 	{
-    #ifdef DEBUG_MODE
+    #ifdef DEBUG_AD7193
 		AD7193_LOG("Init failed...\r\n");	
     #endif	
 		while(1) //失败进入阻塞提示
@@ -376,13 +380,28 @@ int main(void)
 		}
 	}
   ad7193_config_init();
-	#ifdef DEBUG_MODE
-  printf("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
-  printf("\r\n------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);
-  printf("\r\n------------------All Init OK------------------------\r\n");
+	#ifdef DEBUG_SYSTEM
+  SYSTEM_LOG("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
+  SYSTEM_LOG("\r\n------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);
+  SYSTEM_LOG("\r\n------------------All Init OK------------------------\r\n");
   #endif
 	HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);//禁止RTC周期唤醒中断
-	//MX_IWDG_Init();
+	
+	#ifdef DEBUG_FLASH_EXAMPLE
+	#if DOUBLE_2WORD
+	uint32_t wdata_arr[16]={0x1122,0x2233,0x3344,0x4455,0x5566,0x6677,0x7788,0x8899,0x99AA,0xAABB,0xBBCC,0xCCEE,0XEEFF,0xFF00};
+	uint32_t rdata_arr[16]={0};
+	#else
+	uint8_t wdata_arr[17]={0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xAA,0xBB,0xCC,0XEE,0xFF,0x85,0x74,0x52};
+	uint8_t rdata_arr[17]={0};
+	#endif	
+  flash_read(EEPROM_START_ADDRESS, &rdata_arr[0],17);
+	if(0x11!=rdata_arr[0])
+	{
+		  flash_write(EEPROM_START_ADDRESS,&wdata_arr[0],17);		
+	}
+	#endif
+	//MX_IWDG_Init(); 
 	sem_create(&slp_sem);
   while (1)
   {
@@ -390,5 +409,4 @@ int main(void)
 		if(0!=sem_take(&slp_sem)) goto __TODO;//唤醒系统后，重新进入初始化
   }
 }
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

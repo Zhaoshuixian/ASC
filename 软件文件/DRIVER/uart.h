@@ -22,8 +22,7 @@ void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
 void MX_DMA_Init(void);
 void device_uart_handle(void);
-void device_uart_handle(void);
-
+void uart_tx_data(UART_HandleTypeDef *huart,unsigned char *tdata,unsigned int tzise);
 
 #endif
 

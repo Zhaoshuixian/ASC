@@ -53,3 +53,4 @@
 .\objects\main.o: .\DRIVER\i2c.h
 .\objects\main.o: .\DRIVER\wtd.h
 .\objects\main.o: .\DRIVER\os.h
+.\objects\main.o: .\DRIVER\flash.h
