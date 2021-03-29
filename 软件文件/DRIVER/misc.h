@@ -8,7 +8,7 @@
 //#define DEBUG_FLASH_EXAMPLE //写FLASH示例
 #define DEBUG_SYSTEM        //SYSTEM调试信息打印输出
 //#define DEBUG_BMI160      //BMI160调试信息打印输出
-//#define DEBUG_AD7193        //AD7193调试信息打印输出
+#define DEBUG_AD7193        //AD7193调试信息打印输出
 //#define DEBUG_FLASH         //FLASH 调试信息打印输出
 //#define DEBUG_UART1       //UART1调试信息打印输出
 //#define DEBUG_UART2       //UART2调试信息打印输出

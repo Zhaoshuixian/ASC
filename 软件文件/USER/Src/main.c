@@ -140,8 +140,8 @@ void device_lpw_handle(void)
 */
 void hook_idle_handle(void)
 {
-   #ifdef DEBUG_MODE
-   printf(">> Enter Sleep...\r\n");
+   #ifdef SYSTEM_LOG
+   SYSTEM_LOG("Enter Sleep...\r\n");
    #endif 
 	 sem_release(&slp_sem); //释放信号量	
 }
@@ -350,8 +350,8 @@ int main(void)
   MX_SPI3_Init();  //for AD7193
   MX_USART1_UART_Init();   
   MX_USART2_UART_Init();	
-	#ifdef DEBUG_MODE    
-	printf("\r\n> System Startup...\r\n\r\n");
+	#ifdef DEBUG_SYSTEM    
+	SYSTEM_LOG("Startup...\r\n");
 	#endif	
 	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
 	{
@@ -381,9 +381,9 @@ int main(void)
 	}
   ad7193_config_init();
 	#ifdef DEBUG_SYSTEM
-  SYSTEM_LOG("\r\n-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
-  SYSTEM_LOG("\r\n------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);
-  SYSTEM_LOG("\r\n------------------All Init OK------------------------\r\n");
+  SYSTEM_LOG("-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
+  SYSTEM_LOG("------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);
+  SYSTEM_LOG("------------------All Init OK------------------------\r\n");
   #endif
 	HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);//禁止RTC周期唤醒中断
 	
