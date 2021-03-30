@@ -526,7 +526,7 @@ void ad7193_bpdsw_set(void)
     unsigned long newRegValue = 0x0;
     
     newRegValue |= AD7193_GPOCON_BPDSW; //再重新配置寄存器的值
-    ad7193_set_register_value(AD7193_REG_GPOCON, newRegValue, 3, 1);//写入配置寄存器内
+    ad7193_set_register_value(AD7193_REG_GPOCON, newRegValue, 1, 1);//写入配置寄存器内
 }
 
 /*
@@ -580,7 +580,7 @@ void ad7193_config_init(void)
     AD7193_LOG("STATUS REG:%#X...\r\n",tmp_RegValue);	        //0x80
     tmp_RegValue = ad7193_get_register_value(AD7193_REG_CONF, 3, 1);//读配置寄存器		
     AD7193_LOG("CONFIG REG:%#X...\r\n",tmp_RegValue);	        //0X10010
-    tmp_RegValue = ad7193_get_register_value(AD7193_REG_GPOCON, 3, 1);//读	
+    tmp_RegValue = ad7193_get_register_value(AD7193_REG_GPOCON, 1, 1);//读	
     AD7193_LOG("GPOCON REG:%#X...\r\n",tmp_RegValue);	        //	
 #endif
 }
@@ -665,7 +665,7 @@ void device_ad7193_handle(void)
             {
                 ch_tmp[i].volt=ch[i].volt;
                 #ifdef DEBUG_AD7193 
-                AD7193_LOG("CH%d Volts:%.2fV...\r\n",i,ch_tmp[i].volt);	
+                AD7193_LOG("CH%d Volts:%.2fmV...\r\n",i,ch_tmp[i].volt*1000);	
                 #endif      	 
             }    
         }
