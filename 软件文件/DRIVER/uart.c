@@ -58,7 +58,7 @@ void MX_USART2_UART_Init(void)
   if (HAL_UART_Init(&huart2) != HAL_OK)  Error_Handler();
 	
 	__HAL_UART_ENABLE_IT(&huart2,UART_IT_IDLE);//使能IDEL中断	
-	HAL_UART_Receive_IT(&huart2,(uint8_t*)&uart2.rx_buff,UART_BUFF_SIZE);//打开DMA接收，数据缓存至数组缓存区
+	HAL_UART_Receive_DMA(&huart2,(uint8_t*)&uart2.rx_buff,UART_BUFF_SIZE);//打开DMA接收，数据缓存至数组缓存区
 	__HAL_UART_CLEAR_FLAG(&huart2,UART_CLEAR_IDLEF);//清除标志位
 
 }
@@ -113,6 +113,7 @@ static void uart_rx_task(UART_HandleTypeDef *huart)
       UART1_LOG("Recv size:%d\r\n",uart1.rx_len);
       UART1_LOG("Recv data:%s\r\n",uart1.rx_buff);
 			#endif			
+			uart1.rx_len=0;
       uart_dma_reset(&huart1);
       memset(uart1.rx_buff,0,sizeof(uart1.rx_buff));  
     }
@@ -122,11 +123,12 @@ static void uart_rx_task(UART_HandleTypeDef *huart)
     if(uart2.rx_frame_flag)
     {
       uart2.rx_frame_flag=0;      
-      uart2.rx_len=uart_dma_recvlen(&huart1);
+      uart2.rx_len=uart_dma_recvlen(&huart2);
 			#ifdef DEBUG_UART2
       UART2_LOG("Recv size:%d\r\n",uart2.rx_len);
       UART2_LOG("Recv data:%s\r\n",uart2.rx_buff);
 			#endif
+			uart2.rx_len=0;
       uart_dma_reset(&huart2);
       memset(uart2.rx_buff,0,sizeof(uart2.rx_buff));     
     }
