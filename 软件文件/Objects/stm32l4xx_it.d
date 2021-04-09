@@ -35,8 +35,11 @@
 .\objects\stm32l4xx_it.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_rtc_ex.h
 .\objects\stm32l4xx_it.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_spi.h
 .\objects\stm32l4xx_it.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_spi_ex.h
+.\objects\stm32l4xx_it.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_tim.h
+.\objects\stm32l4xx_it.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_tim_ex.h
 .\objects\stm32l4xx_it.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_uart.h
 .\objects\stm32l4xx_it.o: D:\Users\Tek_Eng\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.5.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_uart_ex.h
 .\objects\stm32l4xx_it.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\stm32l4xx_it.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\objects\stm32l4xx_it.o: .\DRIVER\tim.h
 .\objects\stm32l4xx_it.o: .\USER\Inc\stm32l4xx_it.h

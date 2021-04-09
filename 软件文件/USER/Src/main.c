@@ -26,6 +26,7 @@
 #include "wtd.h"
 #include "os.h"
 #include "flash.h"
+#include "tim.h"
 
 /*外设定义*/
 RTC_HandleTypeDef  hrtc;  //rtc
@@ -349,37 +350,40 @@ int main(void)
   MX_I2C1_Init();  //for BMI160
   MX_SPI3_Init();  //for AD7193
   MX_USART1_UART_Init();   
-  MX_USART2_UART_Init();	
+  MX_USART2_UART_Init();
+#if 0	
+	MX_TIM2_Init(48,10000);//
+#endif
 	#ifdef DEBUG_SYSTEM    
 	SYSTEM_LOG("Startup...\r\n");
 	#endif	
-	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
-	{
-		#ifdef DEBUG_BMI160    
-		BMI160_LOG("Init failed...\r\n");
-		#endif          
-		while(1) //失败进入阻塞提示
-		{ 
-			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-			HAL_Delay(150);//LED闪烁指示
-		}
-	}	
-  #ifdef DEBUG_BMI160 
-  BMI160_LOG("CHIP ID:%#X...\r\n",sensor_bmi160.chip_id);
-  #endif    
-	bmi160_config_init();
-	if(DEVICE_INIT_OK!=ad7193_init())//设备初始化失败
-	{
-    #ifdef DEBUG_AD7193
-		AD7193_LOG("Init failed...\r\n");	
-    #endif	
-		while(1) //失败进入阻塞提示
-		{
-			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
-			HAL_Delay(100);//LED闪烁指示
-		}
-	}
-  ad7193_config_init();
+//	if(DEVICE_INIT_OK!=bmi160_bsp_init(&sensor_bmi160)) 
+//	{
+//		#ifdef DEBUG_BMI160    
+//		BMI160_LOG("Init failed...\r\n");
+//		#endif          
+//		while(1) //失败进入阻塞提示
+//		{ 
+//			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+//			HAL_Delay(150);//LED闪烁指示
+//		}
+//	}	
+//  #ifdef DEBUG_BMI160 
+//  BMI160_LOG("CHIP ID:%#X...\r\n",sensor_bmi160.chip_id);
+//  #endif    
+//	bmi160_config_init();
+//	if(DEVICE_INIT_OK!=ad7193_init())//设备初始化失败
+//	{
+//    #ifdef DEBUG_AD7193
+//		AD7193_LOG("Init failed...\r\n");	
+//    #endif	
+//		while(1) //失败进入阻塞提示
+//		{
+//			HAL_GPIO_TogglePin(GPIOA,DEV_LED_Pin);
+//			HAL_Delay(100);//LED闪烁指示
+//		}
+//	}
+//  ad7193_config_init();
 	#ifdef DEBUG_SYSTEM
   SYSTEM_LOG("-------Guangdong Tek Smart Sensor Ltd.,Company-------\r\n");
   SYSTEM_LOG("------------Make Data: %s-%s-------\r\n",(const char *)__TIME__,(const char *)__DATE__);
@@ -388,18 +392,36 @@ int main(void)
 	HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);//禁止RTC周期唤醒中断
 	
 	#ifdef DEBUG_FLASH_EXAMPLE
-	#if DOUBLE_2WORD
+  #if DOUBLE_2WORD
 	uint32_t wdata_arr[16]={0x1122,0x2233,0x3344,0x4455,0x5566,0x6677,0x7788,0x8899,0x99AA,0xAABB,0xBBCC,0xCCEE,0XEEFF,0xFF00};
 	uint32_t rdata_arr[16]={0};
 	#else
 	uint8_t wdata_arr[17]={0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xAA,0xBB,0xCC,0XEE,0xFF,0x85,0x74,0x52};
 	uint8_t rdata_arr[17]={0};
+	
+	uint8_t s_wdata1=0x12;//addr-0x25
+	uint8_t s_wdata2=0x34;//addr-0x30
+	
+	uint8_t s_rdata1=0;//addr-0x1	
+	uint8_t s_rdata2=0;	//addr-0x15	
 	#endif	
-  flash_read(EEPROM_START_ADDRESS, &rdata_arr[0],17);
-	if(0x11!=rdata_arr[0])
+  //flash_read(EEPROM_START_ADDRESS, &rdata_arr[0],17);	
+  flash_read(EEPROM_START_ADDRESS+0x8, &s_rdata1,1);	
+  flash_read(EEPROM_START_ADDRESS+0xC, &s_rdata2,1);		
+//	if(0x11!=rdata_arr[0])
+//	{
+//		 flash_write(EEPROM_START_ADDRESS,&wdata_arr[0],17);		
+//	}
+	if(0x12!=s_rdata1)
 	{
-		  flash_write(EEPROM_START_ADDRESS,&wdata_arr[0],17);		
+     flash_write(EEPROM_START_ADDRESS+0x8,&s_wdata1,1);	
 	}
+	if(0x34!=s_rdata2)
+	{
+     flash_write(EEPROM_START_ADDRESS+0xC,&s_wdata2,1);	
+	}	
+	FLASH_LOG("s_rdata1;%#x\r\n",s_rdata1);
+	FLASH_LOG("s_rdata2;%#x\r\n",s_rdata2);	
 	#endif
 	//MX_IWDG_Init(); 
 	sem_create(&slp_sem);

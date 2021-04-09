@@ -124,6 +124,7 @@ static void FLASH_WriteNoCheck(unsigned int WriteAddress,unsigned char *pBuffer,
 	}
 	else//非8的整数倍数
 	{
+		if(8<NumToWrite)
 		//先完成8个字节倍数的数据整合写入
 		for(i=0;i<NumToWrite/8;i++)//以为写入是按照8字节写入，对于unsigned int *pBuffer，在下面地址偏移次数计算时需要/2
 		{  

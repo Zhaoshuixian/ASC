@@ -1,1 +1,1 @@
-git@github.com:Zhaoshuixian/ASC.git master
+git push git@github.com:Zhaoshuixian/ASC.git master

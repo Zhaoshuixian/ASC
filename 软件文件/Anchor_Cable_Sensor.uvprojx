@@ -443,6 +443,11 @@
               <FileType>1</FileType>
               <FilePath>.\DRIVER\flash.c</FilePath>
             </File>
+            <File>
+              <FileName>tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\DRIVER\tim.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

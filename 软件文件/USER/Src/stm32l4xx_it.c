@@ -20,13 +20,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "uart.h"
+#include "tim.h"
 #include "stm32l4xx_it.h"
-
 extern RTC_HandleTypeDef  hrtc;
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
 
-extern uart_st uart1,uart2;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -254,6 +251,17 @@ void EXTI15_10_IRQHandler(void)
 void RTC_WKUP_IRQHandler(void)
 {
   HAL_RTCEx_WakeUpTimerIRQHandler(&hrtc);
+}
+
+
+/**
+  * @brief  This function handles TIM interrupt request.
+  * @param  None
+  * @retval None
+  */
+void TIM2_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&htim2);
 }
 
 
